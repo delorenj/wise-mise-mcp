@@ -1,0 +1,39 @@
+{
+  "Project Analysis": {
+    "success": true,
+    "project_structure": {
+      "package_managers": [
+        "pip"
+      ],
+      "languages": [
+        "python"
+      ],
+      "has_tests": false,
+      "has_docs": false,
+      "has_ci": false
+    },
+    "existing_tasks": 6,
+    "recommendations": 9,
+    "validation": {
+      "total_tasks": 6,
+      "domains_used": [
+        "test",
+        "lint",
+        "build",
+        "ci",
+        "dev"
+      ],
+      "issues": [],
+      "suggestions": [
+        "Consider connecting orphaned tasks: ['test:test', 'lint:lint', 'build:format', 'ci:ci', 'dev:dev', 'test:coverage']"
+      ]
+    }
+  },
+  "Task Tracing": {
+    "error": "Task 'build' not found"
+  },
+  "Task Creation": {
+    "error": "Task 'test:coverage' already exists",
+    "existing_task": "TaskDefinition(name='test:coverage', domain=<TaskDomain.TEST: 'test'>, description='Run unit tests with coverage reporting', run=\"echo 'TODO: Add test command'\", depends=[], depends_post=[], wait_for=[], sources=['pyproject.toml'], outputs=[], env={}, dir=None, alias=None, hide=False, confirm=None, complexity=<TaskComplexity.SIMPLE: 'simple'>, file_path=None)"
+  }
+}

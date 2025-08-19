@@ -1,0 +1,48 @@
+[tools]
+python = "3.11"
+
+[env]
+PYTHONPATH = "."
+
+[tasks.test]
+description = "Run tests"
+run = "python -m pytest"
+sources = [
+    "mise_task_tools/**/*.py",
+    "tests/**/*.py",
+]
+
+[tasks.lint]
+description = "Run linting"
+run = [
+    "ruff check .",
+    "mypy .",
+]
+sources = [
+    "mise_task_tools/**/*.py",
+]
+
+[tasks.format]
+description = "Format code"
+run = "black ."
+sources = [
+    "mise_task_tools/**/*.py",
+]
+
+[tasks.ci]
+description = "Run CI checks"
+depends = [
+    "lint",
+    "test",
+]
+
+[tasks.dev]
+description = "Start development environment"
+run = "python test_server.py"
+
+[tasks."test:coverage"]
+description = "Run unit tests with coverage reporting"
+run = "echo 'TODO: Add test command'"
+sources = [
+    "pyproject.toml",
+]
