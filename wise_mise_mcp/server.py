@@ -2,9 +2,8 @@
 FastMCP server for intelligent mise task management
 """
 
-import asyncio
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from fastmcp import FastMCP
 from pydantic import BaseModel, Field
@@ -28,8 +27,12 @@ class CreateTaskRequest(BaseModel):
     project_path: str = Field(description="Path to the project directory")
     task_description: str = Field(description="Description of what the task should do")
     suggested_name: Optional[str] = Field(None, description="Suggested task name")
-    force_complexity: Optional[str] = Field(None, description="Force complexity level (simple/moderate/complex)")
-    domain_hint: Optional[str] = Field(None, description="Hint about which domain this task belongs to")
+    force_complexity: Optional[str] = Field(
+        None, description="Force complexity level (simple/moderate/complex)"
+    )
+    domain_hint: Optional[str] = Field(
+        None, description="Hint about which domain this task belongs to"
+    )
 
 
 class ValidateArchitectureRequest(BaseModel):
@@ -54,28 +57,28 @@ app = FastMCP("Mise Task Tools")
 async def analyze_project_for_tasks(request: AnalyzeProjectRequest) -> Dict[str, Any]:
     """
     Analyze a project structure and extract strategic task recommendations.
-    
-    This tool examines the project's package managers, languages, frameworks, and 
-    structure to recommend useful tasks organized by domain. It identifies what 
-    build systems, testing frameworks, and development tools are in use to suggest 
+
+    This tool examines the project's package managers, languages, frameworks, and
+    structure to recommend useful tasks organized by domain. It identifies what
+    build systems, testing frameworks, and development tools are in use to suggest
     practical, actionable tasks.
     """
     try:
         project_path = Path(request.project_path)
         if not project_path.exists():
             return {"error": f"Project path {request.project_path} does not exist"}
-        
+
         analyzer = TaskAnalyzer(project_path)
-        
+
         # Analyze project structure
         structure = analyzer.analyze_project_structure()
-        
+
         # Get task recommendations
         recommendations = analyzer.get_task_recommendations()
-        
+
         # Get existing tasks for context
         existing_tasks = analyzer.extract_existing_tasks()
-        
+
         return {
             "project_path": str(project_path),
             "project_structure": {
@@ -86,14 +89,14 @@ async def analyze_project_for_tasks(request: AnalyzeProjectRequest) -> Dict[str,
                 "has_docs": structure.has_docs,
                 "has_ci": structure.has_ci,
                 "has_database": structure.has_database,
-                "source_dirs": structure.source_dirs
+                "source_dirs": structure.source_dirs,
             },
             "existing_tasks": [
                 {
                     "name": task.full_name,
                     "domain": task.domain.value,
                     "description": task.description,
-                    "complexity": task.complexity.value
+                    "complexity": task.complexity.value,
                 }
                 for task in existing_tasks
             ],
@@ -108,12 +111,12 @@ async def analyze_project_for_tasks(request: AnalyzeProjectRequest) -> Dict[str,
                     "run_command": rec.task.run,
                     "sources": rec.task.sources,
                     "outputs": rec.task.outputs,
-                    "complexity": rec.task.complexity.value
+                    "complexity": rec.task.complexity.value,
                 }
                 for rec in recommendations
-            ]
+            ],
         }
-        
+
     except Exception as e:
         return {"error": f"Failed to analyze project: {str(e)}"}
 
@@ -122,7 +125,7 @@ async def analyze_project_for_tasks(request: AnalyzeProjectRequest) -> Dict[str,
 async def trace_task_chain(request: TraceTaskChainRequest) -> Dict[str, Any]:
     """
     Trace the complete execution chain for a mise task.
-    
+
     This tool analyzes task dependencies to show the full execution flow, including
     what tasks run before/after, parallel execution groups, and detailed information
     about each task in the chain. Useful for understanding complex task workflows
@@ -132,10 +135,10 @@ async def trace_task_chain(request: TraceTaskChainRequest) -> Dict[str, Any]:
         project_path = Path(request.project_path)
         if not project_path.exists():
             return {"error": f"Project path {request.project_path} does not exist"}
-        
+
         analyzer = TaskAnalyzer(project_path)
         return analyzer.trace_task_chain(request.task_name)
-        
+
     except Exception as e:
         return {"error": f"Failed to trace task chain: {str(e)}"}
 
@@ -144,7 +147,7 @@ async def trace_task_chain(request: TraceTaskChainRequest) -> Dict[str, Any]:
 async def create_task(request: CreateTaskRequest) -> Dict[str, Any]:
     """
     Intelligently create a new mise task with proper organization and placement.
-    
+
     This tool analyzes the task description to determine the appropriate domain,
     complexity level, file vs TOML placement, dependencies, and integration with
     existing tasks. It automatically handles script creation, configuration updates,
@@ -154,9 +157,9 @@ async def create_task(request: CreateTaskRequest) -> Dict[str, Any]:
         project_path = Path(request.project_path)
         if not project_path.exists():
             return {"error": f"Project path {request.project_path} does not exist"}
-        
+
         manager = TaskManager(project_path)
-        
+
         # Convert complexity string to enum if provided
         force_complexity = None
         if request.force_complexity:
@@ -164,15 +167,15 @@ async def create_task(request: CreateTaskRequest) -> Dict[str, Any]:
                 force_complexity = TaskComplexity(request.force_complexity.lower())
             except ValueError:
                 return {"error": f"Invalid complexity: {request.force_complexity}"}
-        
+
         result = manager.create_task_intelligently(
             task_description=request.task_description,
             suggested_name=request.suggested_name,
-            force_complexity=force_complexity
+            force_complexity=force_complexity,
         )
-        
+
         return result
-        
+
     except Exception as e:
         return {"error": f"Failed to create task: {str(e)}"}
 
@@ -181,7 +184,7 @@ async def create_task(request: CreateTaskRequest) -> Dict[str, Any]:
 async def validate_task_architecture(request: ValidateArchitectureRequest) -> Dict[str, Any]:
     """
     Validate that the mise task configuration follows best practices.
-    
+
     This tool checks for circular dependencies, missing descriptions, proper domain
     organization, source/output tracking, and other architectural issues. It provides
     specific suggestions for improvements and identifies potential problems.
@@ -190,10 +193,10 @@ async def validate_task_architecture(request: ValidateArchitectureRequest) -> Di
         project_path = Path(request.project_path)
         if not project_path.exists():
             return {"error": f"Project path {request.project_path} does not exist"}
-        
+
         analyzer = TaskAnalyzer(project_path)
         return analyzer.validate_task_architecture()
-        
+
     except Exception as e:
         return {"error": f"Failed to validate architecture: {str(e)}"}
 
@@ -202,7 +205,7 @@ async def validate_task_architecture(request: ValidateArchitectureRequest) -> Di
 async def prune_tasks(request: PruneTasksRequest) -> Dict[str, Any]:
     """
     Identify and optionally remove outdated or redundant tasks.
-    
+
     This tool analyzes the task configuration to find tasks that might be redundant,
     unused, or outdated. It can either report what would be removed (dry_run=True)
     or actually remove the tasks (dry_run=False).
@@ -211,35 +214,35 @@ async def prune_tasks(request: PruneTasksRequest) -> Dict[str, Any]:
         project_path = Path(request.project_path)
         if not project_path.exists():
             return {"error": f"Project path {request.project_path} does not exist"}
-        
+
         analyzer = TaskAnalyzer(project_path)
         redundant_tasks = analyzer.find_redundant_tasks()
-        
+
         if request.dry_run:
             return {
                 "dry_run": True,
                 "redundant_tasks": redundant_tasks,
-                "message": f"Found {len(redundant_tasks)} potentially redundant tasks"
+                "message": f"Found {len(redundant_tasks)} potentially redundant tasks",
             }
-        
+
         # Actually remove redundant tasks
         manager = TaskManager(project_path)
         removed_tasks = []
-        
+
         for redundant in redundant_tasks:
             if "task" in redundant:  # Single isolated task
                 task_name = redundant["task"]
                 result = manager.remove_task(task_name)
                 if result.get("success"):
                     removed_tasks.append(task_name)
-        
+
         return {
             "dry_run": False,
             "redundant_tasks_found": redundant_tasks,
             "removed_tasks": removed_tasks,
-            "message": f"Removed {len(removed_tasks)} redundant tasks"
+            "message": f"Removed {len(removed_tasks)} redundant tasks",
         }
-        
+
     except Exception as e:
         return {"error": f"Failed to prune tasks: {str(e)}"}
 
@@ -248,7 +251,7 @@ async def prune_tasks(request: PruneTasksRequest) -> Dict[str, Any]:
 async def remove_task(request: RemoveTaskRequest) -> Dict[str, Any]:
     """
     Remove a specific task from the mise configuration.
-    
+
     This tool removes a task from either the TOML configuration or deletes the
     file-based task script. It automatically updates documentation and handles
     cleanup.
@@ -257,10 +260,10 @@ async def remove_task(request: RemoveTaskRequest) -> Dict[str, Any]:
         project_path = Path(request.project_path)
         if not project_path.exists():
             return {"error": f"Project path {request.project_path} does not exist"}
-        
+
         manager = TaskManager(project_path)
         return manager.remove_task(request.task_name)
-        
+
     except Exception as e:
         return {"error": f"Failed to remove task: {str(e)}"}
 
@@ -269,7 +272,7 @@ async def remove_task(request: RemoveTaskRequest) -> Dict[str, Any]:
 async def get_task_recommendations(request: AnalyzeProjectRequest) -> Dict[str, Any]:
     """
     Get strategic recommendations for improving task organization.
-    
+
     This tool provides suggestions for new tasks, architectural improvements,
     better dependency organization, and optimization opportunities based on
     project analysis and current task setup.
@@ -278,18 +281,18 @@ async def get_task_recommendations(request: AnalyzeProjectRequest) -> Dict[str, 
         project_path = Path(request.project_path)
         if not project_path.exists():
             return {"error": f"Project path {request.project_path} does not exist"}
-        
+
         analyzer = TaskAnalyzer(project_path)
-        
+
         # Get task recommendations
         recommendations = analyzer.get_task_recommendations()
-        
+
         # Get architecture validation
         validation = analyzer.validate_task_architecture()
-        
+
         # Get redundancy analysis
         redundant = analyzer.find_redundant_tasks()
-        
+
         return {
             "project_path": str(project_path),
             "new_task_recommendations": [
@@ -299,25 +302,24 @@ async def get_task_recommendations(request: AnalyzeProjectRequest) -> Dict[str, 
                     "description": rec.task.description,
                     "reasoning": rec.reasoning,
                     "priority": rec.priority,
-                    "estimated_effort": rec.estimated_effort
+                    "estimated_effort": rec.estimated_effort,
                 }
                 for rec in recommendations[:10]  # Top 10 recommendations
             ],
             "architecture_improvements": {
                 "issues": validation.get("issues", []),
-                "suggestions": validation.get("suggestions", [])
+                "suggestions": validation.get("suggestions", []),
             },
-            "redundancy_analysis": {
-                "redundant_tasks": len(redundant),
-                "details": redundant
-            },
+            "redundancy_analysis": {"redundant_tasks": len(redundant), "details": redundant},
             "summary": {
                 "total_existing_tasks": validation.get("total_tasks", 0),
                 "domains_in_use": len(validation.get("domains_used", [])),
-                "high_priority_recommendations": len([r for r in recommendations if r.priority >= 8])
-            }
+                "high_priority_recommendations": len(
+                    [r for r in recommendations if r.priority >= 8]
+                ),
+            },
         }
-        
+
     except Exception as e:
         return {"error": f"Failed to get recommendations: {str(e)}"}
 
@@ -326,7 +328,7 @@ async def get_task_recommendations(request: AnalyzeProjectRequest) -> Dict[str, 
 async def get_mise_architecture_rules() -> Dict[str, Any]:
     """
     Get the comprehensive mise task architecture rules and best practices.
-    
+
     This tool returns the complete set of rules, patterns, and conventions that
     guide intelligent task creation and organization. Useful for providing context
     to other agents about how tasks should be structured.
@@ -344,21 +346,21 @@ async def get_mise_architecture_rules() -> Dict[str, Any]:
                 "ci": "CI/CD specific tasks",
                 "docs": "Documentation generation, serving",
                 "clean": "Cleanup operations",
-                "setup": "Environment setup, installation"
-            }
+                "setup": "Environment setup, installation",
+            },
         },
         "naming_conventions": {
             "hierarchical_structure": "Use ':' as domain separator (e.g., test:unit, build:frontend)",
             "sub_domain_nesting": "Support multiple levels (e.g., test:integration:api)",
             "environment_variants": "Include environment in name (e.g., deploy:staging)",
-            "tool_specific": "Include tool name when relevant (e.g., lint:eslint)"
+            "tool_specific": "Include tool name when relevant (e.g., lint:eslint)",
         },
         "file_structure": {
             "root_config": "./.mise.toml",
             "task_directory": "./.mise/",
             "file_tasks": "./.mise/tasks/",
             "domain_subdirs": "./.mise/tasks/{domain}/",
-            "local_overrides": "./.mise.local.toml"
+            "local_overrides": "./.mise.local.toml",
         },
         "task_types": {
             "toml_tasks": "Simple, single-command tasks defined in .mise.toml",
@@ -366,8 +368,8 @@ async def get_mise_architecture_rules() -> Dict[str, Any]:
             "complexity_guidelines": {
                 "simple": "Single command, inline in TOML",
                 "moderate": "Multiple commands, still in TOML",
-                "complex": "Requires file task with script"
-            }
+                "complex": "Requires file task with script",
+            },
         },
         "dependencies": {
             "depends": "Hard dependencies that must complete successfully",
@@ -377,15 +379,15 @@ async def get_mise_architecture_rules() -> Dict[str, Any]:
                 "Use wildcards for domain dependencies: depends = ['lint:*']",
                 "Chain related tasks: ci depends on ['build', 'lint', 'test']",
                 "Avoid circular dependencies",
-                "Keep dependency chains shallow (max 3 levels)"
-            ]
+                "Keep dependency chains shallow (max 3 levels)",
+            ],
         },
         "performance": {
             "source_tracking": "Always specify sources for build-related tasks",
             "output_tracking": "Use outputs to enable incremental builds",
             "parallel_execution": "Design tasks to be parallelizable when possible",
-            "glob_patterns": "Limit glob patterns to avoid excessive file scanning"
-        }
+            "glob_patterns": "Limit glob patterns to avoid excessive file scanning",
+        },
     }
 
 
@@ -394,7 +396,7 @@ async def get_mise_architecture_rules() -> Dict[str, Any]:
 async def mise_task_expert_guidance() -> str:
     """
     Provides expert guidance on mise task architecture and best practices.
-    
+
     Use this prompt to get comprehensive guidance on creating, organizing, and
     maintaining mise tasks according to the established architecture rules.
     """
@@ -442,7 +444,7 @@ Provide specific, actionable advice and always explain the reasoning behind reco
 async def task_chain_analyst() -> str:
     """
     Provides analysis and insights about mise task execution chains.
-    
+
     Use this prompt when you need to understand or explain complex task dependencies
     and execution flows to other agents or developers.
     """

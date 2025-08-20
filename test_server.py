@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script to validate the Mise Task Tools MCP server functionality
+Test script to validate the Wise Mise MCP server functionality
 """
 
 import sys
@@ -12,9 +12,9 @@ from typing import Dict, Any
 # Add the package to Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from mise_task_tools.analyzer import TaskAnalyzer
-from mise_task_tools.manager import TaskManager
-from mise_task_tools.models import ProjectStructure
+from wise_mise_mcp.analyzer import TaskAnalyzer
+from wise_mise_mcp.manager import TaskManager
+from wise_mise_mcp.models import ProjectStructure
 
 
 async def test_project_analysis(project_path: Path) -> Dict[str, Any]:
@@ -125,7 +125,7 @@ async def test_task_tracing(project_path: Path, task_name: str = "build") -> Dic
 
 async def main():
     """Main test runner"""
-    print("🚀 Testing Mise Task Tools MCP Server")
+    print("🚀 Testing Wise Mise MCP Server")
     print("=" * 50)
     
     # Test with current project
