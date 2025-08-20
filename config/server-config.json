@@ -1,96 +1,15 @@
 {
-  "logging": {
-    "level": "INFO",
-    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    "file": "./logs/wise-mise-mcp.log",
-    "max_size_mb": 10,
-    "backup_count": 5
-  },
-  "server": {
     "name": "Wise Mise MCP Server",
-    "description": "Production-ready intelligent mise task management with domain expertise",
-    "version": "0.1.0",
-    "author": "Jarad DeLorenzo"
-  },
-  "features": {
-    "health_check": true,
-    "metrics": true,
-    "verbose_errors": true,
-    "auto_documentation": true,
-    "performance_monitoring": true,
-    "detailed_logging": true
-  },
-  "task_defaults": {
-    "complexity_threshold": {
-      "simple_max_commands": 1,
-      "moderate_max_commands": 3
+    "version": "dev",
+    "description": "Intelligent mise task management with domain expertise",
+    "capabilities": {
+        "tools": true,
+        "resources": true,
+        "prompts": true
     },
-    "domain_priorities": {
-      "build": 9,
-      "test": 9,
-      "lint": 8,
-      "ci": 9,
-      "deploy": 7,
-      "dev": 6,
-      "db": 8,
-      "docs": 5,
-      "clean": 4,
-      "setup": 8
-    },
-    "auto_dependencies": {
-      "ci": ["build", "lint", "test"],
-      "deploy": ["build", "test"],
-      "build": ["setup"],
-      "test": ["setup"]
-    },
-    "preferred_tools": {
-      "javascript": {
-        "build": "npm run build",
-        "test": "npm test",
-        "lint": "npm run lint",
-        "dev": "npm run dev"
-      },
-      "python": {
-        "build": "python -m build",
-        "test": "pytest",
-        "lint": "ruff check .",
-        "dev": "python -m uvicorn main:app --reload"
-      },
-      "rust": {
-        "build": "cargo build",
-        "test": "cargo test",
-        "lint": "cargo clippy",
-        "dev": "cargo watch -x run"
-      }
+    "settings": {
+        "max_concurrent_tasks": 10,
+        "timeout_seconds": 300,
+        "cache_enabled": true
     }
-  },
-  "expert_system": {
-    "recommendation_weights": {
-      "project_structure": 0.4,
-      "existing_tasks": 0.3,
-      "language_patterns": 0.2,
-      "industry_standards": 0.1
-    },
-    "complexity_heuristics": {
-      "file_task_keywords": [
-        "multiple steps",
-        "conditional",
-        "validation",
-        "deployment",
-        "migration",
-        "complex workflow"
-      ],
-      "toml_task_keywords": [
-        "simple command",
-        "single action",
-        "basic operation"
-      ]
-    }
-  },
-  "performance": {
-    "max_project_scan_depth": 5,
-    "cache_analysis_results": true,
-    "parallel_task_analysis": true,
-    "optimization_suggestions": true
-  }
 }
