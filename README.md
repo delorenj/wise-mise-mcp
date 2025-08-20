@@ -1,38 +1,42 @@
-# Wise Mise MCP
+# 🎯 Wise Mise MCP
 
-> *An intelligent MCP server for wise mise task management and organization*
+> **The intelligent MCP server that transforms mise task management with AI-powered analysis and domain expertise**
 
 [![PyPI version](https://badge.fury.io/py/wise-mise-mcp.svg)](https://badge.fury.io/py/wise-mise-mcp)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Documentation](https://img.shields.io/badge/docs-readthedocs-blue.svg)](https://wise-mise-mcp.readthedocs.io)
 
-Wise Mise MCP transforms the way you manage and organize [mise](https://mise.jdx.dev/) tasks. It's not just another task runner—it's your intelligent companion that understands your project's architecture, suggests optimal task organization, and helps you build maintainable automation workflows.
+**Stop wrestling with mise configuration.** Wise Mise MCP brings enterprise-grade intelligence to your [mise](https://mise.jdx.dev/) workflow, automatically analyzing your project structure and creating perfectly organized, maintainable task architectures that scale with your development needs.
 
 ## Why Wise Mise MCP?
 
 **🧠 Intelligent Task Analysis**
+
 - Automatically analyzes your project structure to extract meaningful tasks
 - Understands 10+ technology domains (build, test, lint, deploy, CI/CD, etc.)
 - Suggests optimal task organization and dependency patterns
 
 **🏗️ Architecture-Aware**
+
 - Follows mise best practices with hierarchical task organization
 - Supports complex dependency graphs with source/output tracking
 - Optimizes for incremental builds and performance
 
 **🔧 Developer Experience**
+
 - Integrates seamlessly with any MCP-compatible client
 - Provides detailed explanations and recommendations
 - Reduces cognitive load of task management
 
 ## Quick Start
 
-### Using UV (Recommended)
+### Using UVX (Recommended)
 
 ```bash
-# Install with UV
-uv add wise-mise-mcp
+# Just run this to start Wise Mise MCP with UVX
+uvx wise-mise-mcp
 
 # Or install globally
 uv tool install wise-mise-mcp
@@ -52,23 +56,8 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 {
   "mcpServers": {
     "wise-mise-mcp": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "wise_mise_mcp"],
-      "cwd": "/path/to/your/project"
-    }
-  }
-}
-```
-
-### Alternative Configuration
-
-```json
-{
-  "mcpServers": {
-    "wise-mise-mcp": {
-      "command": "python",
-      "args": ["-m", "wise_mise_mcp"],
-      "cwd": "/path/to/your/project"
+      "command": "uvx",
+      "args": ["wise_mise_mcp"]
     }
   }
 }
@@ -79,6 +68,7 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 Wise Mise MCP goes beyond simple task creation. It brings intelligence to your mise configuration:
 
 ### 🔍 Project Analysis
+
 ```python
 # Analyzes your entire project structure
 analyze_project_for_tasks("/path/to/project")
@@ -86,6 +76,7 @@ analyze_project_for_tasks("/path/to/project")
 ```
 
 ### 🕸️ Dependency Mapping
+
 ```python
 # Traces complex task relationships
 trace_task_chain("/path/to/project", "build:prod")
@@ -93,6 +84,7 @@ trace_task_chain("/path/to/project", "build:prod")
 ```
 
 ### ⚡ Smart Task Creation
+
 ```python
 # Intelligently places tasks in the right domain
 create_task(
@@ -105,6 +97,7 @@ create_task(
 ## Core Features
 
 ### 🎯 **Domain Experts**
+
 - **Build**: Frontend/Backend build systems, bundlers, compilers
 - **Test**: Unit, integration, e2e testing strategies
 - **Lint**: Code quality, formatting, static analysis
@@ -113,6 +106,7 @@ create_task(
 - **Development**: Local dev servers, hot reloading, debugging
 
 ### 📊 **Intelligent Analysis**
+
 - **Complexity Assessment**: Automatically categorizes tasks as Simple, Moderate, or Complex
 - **Dependency Detection**: Identifies natural task relationships
 - **Source/Output Tracking**: Optimizes incremental builds
@@ -120,14 +114,14 @@ create_task(
 
 ### 🔧 **MCP Tools**
 
-| Tool | Purpose |
-|------|---------|
-| `analyze_project_for_tasks` | Extract strategic tasks from project structure |
-| `trace_task_chain` | Map task dependencies and execution flow |
-| `create_task` | Add new tasks with intelligent placement |
-| `prune_tasks` | Remove outdated or redundant tasks |
-| `validate_task_architecture` | Ensure configuration follows best practices |
-| `get_task_recommendations` | Get suggestions for optimization |
+| Tool                         | Purpose                                        |
+| ---------------------------- | ---------------------------------------------- |
+| `analyze_project_for_tasks`  | Extract strategic tasks from project structure |
+| `trace_task_chain`           | Map task dependencies and execution flow       |
+| `create_task`                | Add new tasks with intelligent placement       |
+| `prune_tasks`                | Remove outdated or redundant tasks             |
+| `validate_task_architecture` | Ensure configuration follows best practices    |
+| `get_task_recommendations`   | Get suggestions for optimization               |
 
 ## Example Workflows
 
@@ -140,7 +134,7 @@ create_task(
 ✅ Detected: Next.js + TypeScript + Prisma
 📋 Suggested Tasks:
   ├── build:dev (next dev)
-  ├── build:prod (next build)  
+  ├── build:prod (next build)
   ├── test:unit (jest)
   ├── test:e2e (playwright)
   ├── lint:code (eslint)
@@ -157,7 +151,7 @@ create_task(
 
 🕸️ Task Chain for deploy:prod:
   1. lint:types (TypeScript check)
-  2. test:unit (Unit tests)  
+  2. test:unit (Unit tests)
   3. build:prod (Production build)
   4. deploy:prod (Deploy to production)
 
@@ -188,16 +182,19 @@ create_task(
 Wise Mise MCP follows a **Domain-Driven Design** approach to task organization:
 
 ### 🏛️ **Hierarchical Structure**
+
 - **Level 1**: Domain (build, test, lint, etc.)
 - **Level 2**: Environment/Type (dev, prod, unit, e2e)
 - **Level 3**: Specific Implementation (server, client, api)
 
 ### 🔄 **Dependency Patterns**
+
 - **Sequential**: `lint → test → build → deploy`
 - **Parallel**: `test:unit` + `test:e2e` → `deploy`
 - **Conditional**: `deploy:staging` → `test:smoke` → `deploy:prod`
 
 ### ⚡ **Performance Optimization**
+
 - **Source Tracking**: Only rebuild when sources change
 - **Output Caching**: Reuse previous build artifacts
 - **Incremental Builds**: Support for modern build tools
@@ -245,4 +242,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-*Built with ❤️ by [Jarad DeLorenzo](https://github.com/delorenj) and the open source community*
+_Built with ❤️ by [Jarad DeLorenzo](https://github.com/delorenj) and the open source community_
+

@@ -4,6 +4,10 @@ python = "3.11"
 [env]
 PYTHONPATH = "."
 
+[tasks.install]
+description = "Install dependencies from the lock file"
+run = "uv sync"
+
 [tasks.test]
 description = "Run tests"
 run = "python -m pytest"
@@ -38,6 +42,7 @@ depends = [
 
 [tasks.dev]
 description = "Start development environment"
+depends = ["install"]
 run = "python test_server.py"
 
 [tasks."test:coverage"]
@@ -46,3 +51,13 @@ run = "echo 'TODO: Add test command'"
 sources = [
     "pyproject.toml",
 ]
+
+[tasks."dev:serve"]
+description = "Start the FastMCP server"
+run = "uv run -m wise_mise_mcp.server"
+depends = ["setup:bootstrap"]
+
+[tasks."test:client"]
+description = "Run the FastMCP client to test the server"
+run = "uv run client.py"
+depends = ["setup:bootstrap"]

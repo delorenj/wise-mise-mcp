@@ -1,0 +1,18 @@
+{
+  "name": "example-project",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "webpack",
+    "test": "jest",
+    "dev": "webpack serve",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "react": "^18.0.0"
+  },
+  "devDependencies": {
+    "webpack": "^5.0.0",
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0"
+  }
+}

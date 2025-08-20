@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#MISE description="Bootstrap the project: install dependencies, generating lockfile if needed."
+
+set -euo pipefail
+
+echo "📦 Bootstrapping project..."
+
+# Try to sync first. If it fails (e.g., no lockfile), generate lockfile and sync again.
+if ! uv sync --quiet; then
+    echo "uv.lock not found or invalid. Generating lockfile..."
+    uv lock
+    echo "Lockfile generated. Installing dependencies..."
+    uv sync
+else
+    echo "Dependencies are already in sync."
+fi
+
+echo "✅ Project bootstrapped successfully."

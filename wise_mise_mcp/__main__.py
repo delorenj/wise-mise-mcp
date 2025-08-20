@@ -3,7 +3,10 @@
 Main entry point for the Wise Mise MCP Server
 """
 
-if __name__ == "__main__":
-    from wise_mise_mcp.server import main
+def main():
+    """Main entry point for the CLI script."""
+    from wise_mise_mcp.server import main as server_main
+    server_main()
 
+if __name__ == "__main__":
     main()

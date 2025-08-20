@@ -1,0 +1,8 @@
+
+# Example mise configuration
+[tools]
+node = "20"
+
+[tasks.hello]
+run = "echo 'Hello from mise!'"
+description = "Simple greeting task"

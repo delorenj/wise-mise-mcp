@@ -1,0 +1,94 @@
+# Coverage.py configuration for wise-mise-mcp
+
+[run]
+source = wise_mise_mcp
+omit = 
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */.*
+    */venv/*
+    */env/*
+    */build/*
+    */dist/*
+    */node_modules/*
+    setup.py
+    */migrations/*
+    */locale/*
+    */static/*
+    */media/*
+
+# Enable branch coverage
+branch = True
+
+# Include subprocess coverage
+concurrency = multiprocessing,thread
+
+# Collect coverage data from subprocesses
+parallel = True
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug-only code
+    def __repr__
+    if self\.debug
+
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+
+    # Don't complain if non-runnable code isn't run
+    if 0:
+    if __name__ == .__main__.:
+
+    # Skip abstract methods
+    @(abc\.)?abstractmethod
+    
+    # Skip protocol methods
+    class .*\bProtocol\):
+    
+    # Skip type checking imports
+    if TYPE_CHECKING:
+    
+    # Skip platform specific code
+    if sys.platform
+    
+    # Skip version checks
+    if sys.version_info
+
+# Minimum coverage percentage
+fail_under = 85
+
+# Show missing line numbers
+show_missing = True
+
+# Show branch coverage
+show_branch = True
+
+# Skip covered files in report
+skip_covered = False
+
+# Skip empty files
+skip_empty = False
+
+# Sort by name
+sort = Name
+
+# Precision for percentages
+precision = 1
+
+[html]
+directory = tests/coverage_html
+title = wise-mise-mcp Coverage Report
+show_contexts = True
+
+[xml]
+output = tests/coverage.xml
+
+[json]
+output = tests/coverage.json
+show_contexts = True

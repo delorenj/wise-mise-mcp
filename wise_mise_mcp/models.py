@@ -6,7 +6,10 @@ from typing import Dict, List, Optional, Set, Union, Any
 from enum import Enum
 from dataclasses import dataclass, field
 from pathlib import Path
-import tomli
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 import tomli_w
 
 
@@ -84,7 +87,7 @@ class MiseConfig:
             return cls()
 
         with open(path, "rb") as f:
-            data = tomli.load(f)
+            data = tomllib.load(f)
 
         return cls(
             tools=data.get("tools", {}),

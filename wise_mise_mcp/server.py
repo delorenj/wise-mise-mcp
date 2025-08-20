@@ -325,6 +325,198 @@ async def get_task_recommendations(request: AnalyzeProjectRequest) -> Dict[str, 
 
 
 @app.tool()
+async def get_server_health() -> Dict[str, Any]:
+    """
+    Get comprehensive server health and diagnostics information.
+
+    This tool provides detailed information about the server's health status,
+    including dependency checks, system information, feature availability,
+    and diagnostic data. Useful for troubleshooting and monitoring.
+    """
+    try:
+        from datetime import datetime
+        import sys
+        import os
+        from pathlib import Path
+        
+        health = {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "server_info": {
+                "name": "Wise Mise MCP Server",
+                "version": "0.1.0",
+                "author": "Jarad DeLorenzo",
+                "description": "Intelligent mise task management with domain expertise"
+            },
+            "system_info": {
+                "python_version": sys.version,
+                "platform": sys.platform,
+                "working_directory": os.getcwd(),
+                "python_path": sys.path[:3]  # First 3 entries
+            },
+            "dependencies": {},
+            "features": {},
+            "diagnostics": {}
+        }
+        
+        # Check dependencies
+        dependencies_to_check = [
+            ("fastmcp", "FastMCP framework"),
+            ("networkx", "Graph analysis"),
+            ("pydantic", "Data validation"),
+            ("tomli", "TOML parsing"),
+            ("tomli_w", "TOML writing")
+        ]
+        
+        for dep_name, description in dependencies_to_check:
+            try:
+                module = __import__(dep_name)
+                version = getattr(module, '__version__', 'unknown')
+                health["dependencies"][dep_name] = {
+                    "status": "available",
+                    "version": version,
+                    "description": description
+                }
+            except ImportError as e:
+                health["dependencies"][dep_name] = {
+                    "status": "missing",
+                    "error": str(e),
+                    "description": description
+                }
+                health["status"] = "degraded"
+        
+        # Test core features
+        try:
+            from .models import TaskDomain, TaskComplexity, ProjectStructure
+            domains = [domain.value for domain in TaskDomain]
+            complexities = [complexity.value for complexity in TaskComplexity]
+            
+            health["features"]["task_system"] = {
+                "status": "available",
+                "domains": domains,
+                "complexities": complexities,
+                "domain_count": len(domains),
+                "complexity_count": len(complexities)
+            }
+            
+            # Test project analysis on current directory
+            test_path = Path.cwd()
+            structure = ProjectStructure.analyze(test_path)
+            health["features"]["project_analysis"] = {
+                "status": "available",
+                "test_project": {
+                    "path": str(test_path.absolute()),
+                    "package_managers": list(structure.package_managers),
+                    "languages": list(structure.languages),
+                    "has_tests": structure.has_tests,
+                    "has_docs": structure.has_docs,
+                    "has_ci": structure.has_ci
+                }
+            }
+            
+        except Exception as e:
+            health["features"]["core_functionality"] = {
+                "status": "error", 
+                "error": str(e)
+            }
+            health["status"] = "degraded"
+        
+        # Test expert system
+        try:
+            from .analyzer import TaskAnalyzer
+            from .manager import TaskManager
+            
+            # Test analyzer
+            analyzer = TaskAnalyzer(Path.cwd())
+            existing_tasks = analyzer.extract_existing_tasks()
+            
+            health["features"]["expert_system"] = {
+                "status": "available",
+                "analyzer_available": True,
+                "manager_available": True,
+                "existing_tasks_count": len(existing_tasks),
+                "expert_domains": len([domain.value for domain in TaskDomain])
+            }
+            
+        except Exception as e:
+            health["features"]["expert_system"] = {
+                "status": "error",
+                "error": str(e)
+            }
+            health["status"] = "degraded"
+        
+        # Diagnostic information
+        try:
+            # Check mise.toml in current directory
+            mise_config = Path.cwd() / ".mise.toml"
+            health["diagnostics"]["mise_config"] = {
+                "exists": mise_config.exists(),
+                "path": str(mise_config.absolute()),
+                "readable": mise_config.exists() and mise_config.is_file()
+            }
+            
+            # Check .mise directory
+            mise_dir = Path.cwd() / ".mise"
+            tasks_dir = mise_dir / "tasks"
+            health["diagnostics"]["mise_directory"] = {
+                "exists": mise_dir.exists(),
+                "tasks_dir_exists": tasks_dir.exists(),
+                "path": str(mise_dir.absolute())
+            }
+            
+            # Available tools summary
+            health["diagnostics"]["available_tools"] = [
+                "analyze_project_for_tasks",
+                "trace_task_chain", 
+                "create_task",
+                "validate_task_architecture",
+                "prune_tasks",
+                "remove_task",
+                "get_task_recommendations",
+                "get_mise_architecture_rules",
+                "get_server_health"  # This tool
+            ]
+            
+            # Available prompts summary
+            health["diagnostics"]["available_prompts"] = [
+                "mise_task_expert_guidance",
+                "task_chain_analyst"
+            ]
+            
+        except Exception as e:
+            health["diagnostics"]["error"] = str(e)
+        
+        # Overall status assessment
+        error_count = 0
+        for category in [health["dependencies"], health["features"]]:
+            for item in category.values():
+                if isinstance(item, dict) and item.get("status") in ["missing", "error"]:
+                    error_count += 1
+        
+        if error_count > 2:
+            health["status"] = "unhealthy"
+        elif error_count > 0:
+            health["status"] = "degraded"
+        
+        health["summary"] = {
+            "overall_status": health["status"],
+            "dependencies_checked": len(health["dependencies"]),
+            "features_tested": len(health["features"]),
+            "diagnostics_collected": len(health["diagnostics"]),
+            "error_count": error_count
+        }
+        
+        return health
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": f"Health check failed: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }
+
+
+@app.tool()
 async def get_mise_architecture_rules() -> Dict[str, Any]:
     """
     Get the comprehensive mise task architecture rules and best practices.

@@ -1,0 +1,263 @@
+name: Performance Monitoring & Benchmarking
+
+on:
+  schedule:
+    # Run performance tests every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      benchmark_type:
+        description: 'Type of benchmark to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - mcp_server
+          - task_analysis
+          - memory_usage
+      iterations:
+        description: 'Number of benchmark iterations'
+        required: false
+        default: '100'
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  performance-baseline:
+    name: Performance Baseline Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need history for performance comparison
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install pytest-benchmark memory-profiler psutil py-spy
+      
+      - name: Run MCP server performance tests
+        if: github.event.inputs.benchmark_type == 'all' || github.event.inputs.benchmark_type == 'mcp_server'
+        run: |
+          pytest tests/benchmark/test_mcp_performance.py \
+            --benchmark-json=mcp_benchmark.json \
+            --benchmark-save=mcp_baseline \
+            --benchmark-warmup=on \
+            --benchmark-warmup-iterations=10 \
+            --benchmark-max-time=300 \
+            -v
+      
+      - name: Run task analysis performance tests  
+        if: github.event.inputs.benchmark_type == 'all' || github.event.inputs.benchmark_type == 'task_analysis'
+        run: |
+          pytest tests/benchmark/test_analysis_performance.py \
+            --benchmark-json=analysis_benchmark.json \
+            --benchmark-save=analysis_baseline \
+            --benchmark-warmup=on \
+            -v
+      
+      - name: Run memory usage tests
+        if: github.event.inputs.benchmark_type == 'all' || github.event.inputs.benchmark_type == 'memory_usage'
+        run: |
+          pytest tests/benchmark/test_memory_performance.py \
+            --benchmark-json=memory_benchmark.json \
+            --benchmark-save=memory_baseline \
+            -v
+      
+      - name: Generate performance report
+        run: |
+          python tests/benchmark/generate_report.py \
+            --output=performance_report.html \
+            --format=html
+      
+      - name: Compare with previous benchmarks
+        run: |
+          pytest-benchmark compare mcp_baseline \
+            --compare-fail=min:10%,max:10%,mean:10% \
+            --histogram=performance_histogram.svg
+      
+      - name: Upload performance artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results-${{ github.run_id }}
+          path: |
+            *_benchmark.json
+            performance_report.html
+            performance_histogram.svg
+            .benchmarks/
+
+  memory-profiling:
+    name: Memory Profiling
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install memory-profiler pympler tracemalloc-tools
+      
+      - name: Run memory profiling
+        run: |
+          python -m memory_profiler tests/benchmark/memory_profile_server.py > memory_profile.txt
+          python tests/benchmark/memory_analysis.py --output=memory_analysis.json
+      
+      - name: Check for memory leaks
+        run: |
+          python tests/benchmark/leak_detection.py \
+            --iterations=${{ github.event.inputs.iterations || '100' }} \
+            --threshold=10MB
+      
+      - name: Upload memory analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-analysis-${{ github.run_id }}
+          path: |
+            memory_profile.txt
+            memory_analysis.json
+            memory_leak_report.json
+
+  stress-testing:
+    name: Stress & Load Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install locust aiohttp-devtools
+      
+      - name: Run concurrent request stress test
+        run: |
+          python tests/benchmark/stress_test_server.py \
+            --concurrent-users=50 \
+            --duration=300 \
+            --ramp-up=30 \
+            --output=stress_test_results.json
+      
+      - name: Run large project analysis test
+        run: |
+          python tests/benchmark/large_project_test.py \
+            --project-size=large \
+            --files=10000 \
+            --output=large_project_results.json
+      
+      - name: Upload stress test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-test-results-${{ github.run_id }}
+          path: |
+            stress_test_results.json
+            large_project_results.json
+
+  performance-regression:
+    name: Performance Regression Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [performance-baseline]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download current performance results
+        uses: actions/download-artifact@v4
+        with:
+          name: performance-results-${{ github.run_id }}
+          path: current_results/
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install analysis tools
+        run: |
+          pip install pandas matplotlib seaborn
+      
+      - name: Analyze performance trends
+        run: |
+          python tests/benchmark/regression_analysis.py \
+            --current=current_results/ \
+            --baseline=.benchmarks/ \
+            --threshold=15 \
+            --output=regression_report.html
+      
+      - name: Check for performance regressions
+        run: |
+          python tests/benchmark/check_regressions.py \
+            --report=regression_report.html \
+            --fail-on-regression
+      
+      - name: Upload regression analysis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-analysis-${{ github.run_id }}
+          path: |
+            regression_report.html
+            performance_trends.png
+
+  notify-performance:
+    name: Performance Notification
+    runs-on: ubuntu-latest
+    needs: [performance-baseline, memory-profiling, stress-testing, performance-regression]
+    if: always()
+    
+    steps:
+      - name: Generate performance summary
+        run: |
+          echo "## 📊 Performance Monitoring Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Type | Status | Notes |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Baseline Tests | ${{ needs.performance-baseline.result }} | Core performance metrics |" >> $GITHUB_STEP_SUMMARY
+          echo "| Memory Profiling | ${{ needs.memory-profiling.result }} | Memory usage analysis |" >> $GITHUB_STEP_SUMMARY
+          echo "| Stress Testing | ${{ needs.stress-testing.result }} | Load & concurrency tests |" >> $GITHUB_STEP_SUMMARY
+          echo "| Regression Detection | ${{ needs.performance-regression.result }} | Performance trend analysis |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Key Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- MCP server response time benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "- Task analysis performance metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- Memory usage profiling results" >> $GITHUB_STEP_SUMMARY
+          echo "- Stress test capacity analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📈 Performance Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Download detailed reports from workflow artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Check regression analysis for performance trends" >> $GITHUB_STEP_SUMMARY
+          echo "- Review memory profiling for optimization opportunities" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,29 @@
+include README.md
+include LICENSE
+include docs/CHANGELOG.md
+recursive-include wise_mise_mcp *.py
+recursive-include tests *.py
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude *.so
+global-exclude .git*
+prune build
+prune dist
+prune .git
+prune node_modules
+prune .claude-flow
+prune coordination
+prune hive
+prune memory
+prune config
+exclude *.md
+exclude *.json
+exclude *.lock
+exclude *.ini
+exclude *.toml.bk
+exclude package*.json
+exclude claude-flow*
+exclude test_*.py
+exclude run_*.py
+exclude main.py
