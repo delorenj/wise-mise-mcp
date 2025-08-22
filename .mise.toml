@@ -11,34 +11,21 @@ run = "uv sync"
 [tasks.test]
 description = "Run tests"
 run = "python -m pytest"
-sources = [
-    "mise_task_tools/**/*.py",
-    "tests/**/*.py",
-]
+sources = ["mise_task_tools/**/*.py", "tests/**/*.py"]
 
 [tasks.lint]
 description = "Run linting"
-run = [
-    "ruff check .",
-    "mypy .",
-]
-sources = [
-    "mise_task_tools/**/*.py",
-]
+run = ["ruff check .", "mypy ."]
+sources = ["mise_task_tools/**/*.py"]
 
 [tasks.format]
 description = "Format code"
 run = "black ."
-sources = [
-    "mise_task_tools/**/*.py",
-]
+sources = ["mise_task_tools/**/*.py"]
 
 [tasks.ci]
 description = "Run CI checks"
-depends = [
-    "lint",
-    "test",
-]
+depends = ["lint", "test"]
 
 [tasks.dev]
 description = "Start development environment"
@@ -48,9 +35,7 @@ run = "python test_server.py"
 [tasks."test:coverage"]
 description = "Run unit tests with coverage reporting"
 run = "echo 'TODO: Add test command'"
-sources = [
-    "pyproject.toml",
-]
+sources = ["pyproject.toml"]
 
 [tasks."dev:serve"]
 description = "Start the FastMCP server"
@@ -61,3 +46,65 @@ depends = ["setup:bootstrap"]
 description = "Run the FastMCP client to test the server"
 run = "uv run client.py"
 depends = ["setup:bootstrap"]
+
+[tasks."bump:minor"]
+description = "Increment minor version (1.3.0 -> 1.4.0)"
+run = [
+  "python -c \"import tomli_w, tomllib; p = tomllib.load(open('pyproject.toml', 'rb')); v = p['project']['version'].split('.'); v[1] = str(int(v[1]) + 1); v[2] = '0'; p['project']['version'] = '.'.join(v); tomli_w.dump(p, open('pyproject.toml', 'wb'))\"",
+  "echo 'Version bumped to:' && python -c \"import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])\"",
+]
+sources = ["pyproject.toml"]
+outputs = ["pyproject.toml"]
+
+[tasks."bump:major"]
+description = "Increment major version (1.3.0 -> 2.0.0)"
+run = [
+  "python -c \"import tomli_w, tomllib; p = tomllib.load(open('pyproject.toml', 'rb')); v = p['project']['version'].split('.'); v[0] = str(int(v[0]) + 1); v[1] = '0'; v[2] = '0'; p['project']['version'] = '.'.join(v); tomli_w.dump(p, open('pyproject.toml', 'wb'))\"",
+  "echo 'Version bumped to:' && python -c \"import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])\"",
+]
+sources = ["pyproject.toml"]
+outputs = ["pyproject.toml"]
+
+[tasks."bump:patch"]
+description = "Increment patch version (1.3.0 -> 1.3.1)"
+run = [
+  "python -c \"import tomli_w, tomllib; p = tomllib.load(open('pyproject.toml', 'rb')); v = p['project']['version'].split('.'); v[2] = str(int(v[2]) + 1); p['project']['version'] = '.'.join(v); tomli_w.dump(p, open('pyproject.toml', 'wb'))\"",
+  "echo 'Version bumped to:' && python -c \"import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])\"",
+]
+sources = ["pyproject.toml"]
+outputs = ["pyproject.toml"]
+
+[tasks.publish]
+description = "Build and publish package to PyPI"
+depends = ["lint", "test"]
+run = [
+  "uv build",
+  "twine check dist/*",
+  "echo 'Publishing to PyPI...'",
+  "twine upload dist/*",
+]
+sources = ["wise_mise_mcp/**/*.py", "pyproject.toml", "README.md"]
+
+[tasks."build:patch"]
+description = "Build version bump: increment patch version number by modifying pyproject.toml"
+run = "echo 'TODO: Add build command'"
+sources = ["package.json", "pyproject.toml"]
+outputs = ["dist/", "build/", "target/"]
+
+[tasks."build:minor"]
+description = "Build version increment: minor version number update by modifying pyproject.toml"
+run = "echo 'TODO: Add build command'"
+sources = ["package.json", "pyproject.toml"]
+outputs = ["dist/", "build/", "target/"]
+
+[tasks."build:major"]
+description = "Build version increment: major version number update by modifying pyproject.toml"
+run = "echo 'TODO: Add build command'"
+sources = ["package.json", "pyproject.toml"]
+outputs = ["dist/", "build/", "target/"]
+
+[tasks."deploy:publish"]
+description = "Deploy build: publish package to PyPI with validation"
+run = "echo 'TODO: Add build command'"
+sources = ["package.json", "pyproject.toml"]
+outputs = ["dist/", "build/", "target/"]
