@@ -86,25 +86,39 @@ run = [
 sources = ["wise_mise_mcp/**/*.py", "pyproject.toml", "README.md"]
 
 [tasks."build:patch"]
-description = "Build version bump: increment patch version number by modifying pyproject.toml"
-run = "echo 'TODO: Add build command'"
-sources = ["package.json", "pyproject.toml"]
-outputs = ["dist/", "build/", "target/"]
+description = "Build version bump: increment patch version and build package"
+depends = ["bump:patch"]
+run = "uv build"
+sources = ["wise_mise_mcp/**/*.py", "pyproject.toml"]
+outputs = ["dist/"]
 
 [tasks."build:minor"]
-description = "Build version increment: minor version number update by modifying pyproject.toml"
-run = "echo 'TODO: Add build command'"
-sources = ["package.json", "pyproject.toml"]
-outputs = ["dist/", "build/", "target/"]
+description = "Build version increment: minor version update and build package"
+depends = ["bump:minor"]
+run = "uv build"
+sources = ["wise_mise_mcp/**/*.py", "pyproject.toml"]
+outputs = ["dist/"]
 
 [tasks."build:major"]
-description = "Build version increment: major version number update by modifying pyproject.toml"
-run = "echo 'TODO: Add build command'"
-sources = ["package.json", "pyproject.toml"]
-outputs = ["dist/", "build/", "target/"]
+description = "Build version increment: major version update and build package"
+depends = ["bump:major"]
+run = "uv build"
+sources = ["wise_mise_mcp/**/*.py", "pyproject.toml"]
+outputs = ["dist/"]
+
+[tasks."deploy:build"]
+description = "Build the package for deployment"
+depends = ["lint", "test"]
+run = "uv build"
+sources = ["wise_mise_mcp/**/*.py", "pyproject.toml", "README.md"]
+outputs = ["dist/"]
 
 [tasks."deploy:publish"]
 description = "Deploy build: publish package to PyPI with validation"
-run = "echo 'TODO: Add build command'"
-sources = ["package.json", "pyproject.toml"]
-outputs = ["dist/", "build/", "target/"]
+depends = ["deploy:build"]
+run = [
+  "twine check dist/*",
+  "echo 'Publishing to PyPI...'",
+  "twine upload dist/*",
+]
+sources = ["wise_mise_mcp/**/*.py", "pyproject.toml", "README.md"]
