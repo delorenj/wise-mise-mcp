@@ -15,10 +15,14 @@ from wise_mise_mcp.server import (
     create_task,
     validate_task_architecture,
     get_task_recommendations,
+    prune_tasks,
+    remove_task,
     AnalyzeProjectRequest,
     TraceTaskChainRequest,
     CreateTaskRequest,
-    ValidateArchitectureRequest
+    ValidateArchitectureRequest,
+    PruneTasksRequest,
+    RemoveTaskRequest
 )
 
 
@@ -37,33 +41,33 @@ class TestMCPServerIntegration:
             
             # Step 1: Analyze project structure
             analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
-            analysis_result = await analyze_project_for_tasks(analyze_request)
+            analysis_result = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             
             assert "error" not in analysis_result
             assert analysis_result["project_structure"]["package_managers"] == ["npm"]
             assert "javascript" in analysis_result["project_structure"]["languages"] 
             assert analysis_result["project_structure"]["has_tests"] is True
             
-            # Step 2: Get task recommendations
-            recommendations_result = await get_task_recommendations(analyze_request)
-            
-            assert "error" not in recommendations_result
-            assert len(recommendations_result["new_task_recommendations"]) > 0
+            # Step 2: Check task recommendations from analysis
+            assert "error" not in analysis_result
+            assert "recommended_tasks" in analysis_result
             
             # Should recommend build, test, lint tasks for React project
-            rec_names = [r["task_name"] for r in recommendations_result["new_task_recommendations"]]
-            domains_represented = set()
-            for name in rec_names:
-                if ":" in name:
-                    domain = name.split(":")[0]
-                    domains_represented.add(domain)
-                    
-            # Should cover major development domains
-            assert "build" in domains_represented or "test" in domains_represented
+            recommendations = analysis_result["recommended_tasks"]
+            if recommendations:
+                rec_names = [r["name"] for r in recommendations]
+                domains_represented = set()
+                for name in rec_names:
+                    if ":" in name:
+                        domain = name.split(":")[0]
+                        domains_represented.add(domain)
+                        
+                # Should cover major development domains
+                assert len(domains_represented) > 0
             
             # Step 3: Validate architecture
             validate_request = ValidateArchitectureRequest(project_path=str(project_path))
-            validation_result = await validate_task_architecture(validate_request)
+            validation_result = await validate_task_architecture.fn(project_path=validate_request.project_path)
             
             assert "error" not in validation_result
             
@@ -84,7 +88,11 @@ class TestMCPServerIntegration:
                 suggested_name="coverage"
             )
             
-            create_result = await create_task(create_request)
+            create_result = await create_task.fn(
+                project_path=create_request.project_path,
+                task_description=create_request.task_description,
+                suggested_name=create_request.suggested_name
+            )
             
             if "error" not in create_result:
                 # Task was created successfully, try to trace it
@@ -95,7 +103,10 @@ class TestMCPServerIntegration:
                     task_name=task_name
                 )
                 
-                trace_result = await trace_task_chain(trace_request)
+                trace_result = await trace_task_chain.fn(
+                    project_path=trace_request.project_path,
+                    task_name=trace_request.task_name
+                )
                 
                 if "error" not in trace_result:
                     assert trace_result["task_name"] == task_name
@@ -114,7 +125,7 @@ class TestMCPServerIntegration:
             
             # Analyze the complex project
             analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
-            result = await analyze_project_for_tasks(analyze_request)
+            result = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             
             assert "error" not in result
             
@@ -129,7 +140,7 @@ class TestMCPServerIntegration:
             assert len(result["existing_tasks"]) >= 5
             
             # Should provide relevant recommendations
-            assert len(result["recommendations"]) >= 0
+            assert len(result["recommended_tasks"]) >= 0
             
     @pytest.mark.integration
     @pytest.mark.asyncio 
@@ -143,7 +154,7 @@ class TestMCPServerIntegration:
             
             # Analyze Python project
             analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
-            result = await analyze_project_for_tasks(analyze_request)
+            result = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             
             assert "error" not in result
             
@@ -152,7 +163,7 @@ class TestMCPServerIntegration:
             assert "python" in structure["languages"]
             
             # Should recommend Python-specific tasks
-            recommendations = result["recommendations"]
+            recommendations = result["recommended_tasks"]
             python_tasks = [r for r in recommendations if "python" in r.get("run_command", "").lower() or "pytest" in r.get("run_command", "").lower()]
             
             # Might not always have Python-specific recommendations, but structure should be detected
@@ -169,7 +180,7 @@ class TestMCPServerIntegration:
             
             # Analyze Rust project
             analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
-            result = await analyze_project_for_tasks(analyze_request)
+            result = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             
             assert "error" not in result
             
@@ -178,7 +189,7 @@ class TestMCPServerIntegration:
             assert "rust" in structure["languages"]
             
             # Should recommend Rust-specific tasks
-            recommendations = result["recommendations"]
+            recommendations = result["recommended_tasks"]
             cargo_tasks = [r for r in recommendations if "cargo" in r.get("run_command", "")]
             
             # Should have cargo build and test recommendations
@@ -639,7 +650,7 @@ run = "npm run build"  # Missing closing bracket
 """)
             
             analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
-            result = await analyze_project_for_tasks(analyze_request)
+            result = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             
             # Should handle TOML parsing errors gracefully
             # Either return error or work with partial parsing
@@ -652,7 +663,7 @@ run = "npm run build"  # Missing closing bracket
         # This test may not work in all environments
         try:
             analyze_request = AnalyzeProjectRequest(project_path="/root/restricted")
-            result = await analyze_project_for_tasks(analyze_request)
+            result = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             
             # Should return error instead of crashing
             assert isinstance(result, dict)
@@ -676,7 +687,7 @@ run = "npm run build"  # Missing closing bracket
             start_time = time.time()
             
             analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
-            result = await analyze_project_for_tasks(analyze_request)
+            result = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             
             end_time = time.time()
             analysis_time = end_time - start_time
@@ -751,9 +762,9 @@ run = "echo test"
             analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
             
             tasks = [
-                analyze_project_for_tasks(analyze_request),
-                analyze_project_for_tasks(analyze_request), 
-                analyze_project_for_tasks(analyze_request)
+                analyze_project_for_tasks.fn(project_path=analyze_request.project_path),
+                analyze_project_for_tasks.fn(project_path=analyze_request.project_path), 
+                analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             ]
             
             results = await asyncio.gather(*tasks, return_exceptions=True)

@@ -39,7 +39,7 @@ class TestTaskLifecycleWorkflows:
             
             # Step 1: Analyze initial project
             analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
-            initial_analysis = await analyze_project_for_tasks(analyze_request)
+            initial_analysis = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             
             assert "error" not in initial_analysis
             initial_task_count = len(initial_analysis["existing_tasks"])
@@ -51,14 +51,18 @@ class TestTaskLifecycleWorkflows:
                 suggested_name="coverage"
             )
             
-            create_result = await create_task(create_request)
+            create_result = await create_task.fn(
+                project_path=create_request.project_path,
+                task_description=create_request.task_description,
+                suggested_name=create_request.suggested_name
+            )
             
             if "error" not in create_result:
                 assert create_result["success"] is True
                 new_task_name = create_result["task_name"]
                 
                 # Step 3: Verify task was added
-                updated_analysis = await analyze_project_for_tasks(analyze_request)
+                updated_analysis = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
                 updated_task_count = len(updated_analysis["existing_tasks"])
                 
                 if create_result["type"] == "toml_task":
@@ -74,7 +78,10 @@ class TestTaskLifecycleWorkflows:
                     task_name=new_task_name
                 )
                 
-                trace_result = await trace_task_chain(trace_request)
+                trace_result = await trace_task_chain.fn(
+                    project_path=trace_request.project_path,
+                    task_name=trace_request.task_name
+                )
                 
                 if "error" not in trace_result:
                     assert trace_result["task_name"] == new_task_name
@@ -82,7 +89,7 @@ class TestTaskLifecycleWorkflows:
                     
                 # Step 5: Validate architecture after changes
                 validate_request = ValidateArchitectureRequest(project_path=str(project_path))
-                validation_result = await validate_task_architecture(validate_request)
+                validation_result = await validate_task_architecture.fn(project_path=validate_request.project_path)
                 
                 assert "error" not in validation_result
                 
@@ -92,13 +99,16 @@ class TestTaskLifecycleWorkflows:
                     task_name=new_task_name
                 )
                 
-                remove_result = await remove_task(remove_request)
+                remove_result = await remove_task.fn(
+                    project_path=remove_request.project_path,
+                    task_name=remove_request.task_name
+                )
                 
                 if "error" not in remove_result:
                     assert remove_result["success"] is True
                     
                     # Step 7: Verify task was removed
-                    final_analysis = await analyze_project_for_tasks(analyze_request)
+                    final_analysis = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
                     final_task_count = len(final_analysis["existing_tasks"])
                     
                     if create_result["type"] == "toml_task":
@@ -142,7 +152,11 @@ class TestTaskLifecycleWorkflows:
                     suggested_name=task_info["name"]
                 )
                 
-                result = await create_task(create_request)
+                result = await create_task.fn(
+                    project_path=create_request.project_path,
+                    task_description=create_request.task_description,
+                    suggested_name=create_request.suggested_name
+                )
                 
                 if "error" not in result and result.get("success"):
                     created_tasks.append(result["task_name"])
@@ -154,7 +168,10 @@ class TestTaskLifecycleWorkflows:
                     task_name=task_name
                 )
                 
-                trace_result = await trace_task_chain(trace_request)
+                trace_result = await trace_task_chain.fn(
+                    project_path=trace_request.project_path,
+                    task_name=trace_request.task_name
+                )
                 
                 if "error" not in trace_result:
                     assert trace_result["task_name"] == task_name
@@ -177,31 +194,37 @@ class TestTaskLifecycleWorkflows:
                 dry_run=True
             )
             
-            dry_run_result = await prune_tasks(prune_request)
+            dry_run_result = await prune_tasks.fn(
+                project_path=prune_request.project_path,
+                dry_run=prune_request.dry_run
+            )
             
             assert "error" not in dry_run_result
             assert dry_run_result["dry_run"] is True
             
-            redundant_count = len(dry_run_result["redundant_tasks"])
+            redundant_count = len(dry_run_result["tasks_to_prune"])
             
             if redundant_count > 0:
                 # Step 2: Actually prune redundant tasks
                 prune_request.dry_run = False
-                actual_prune_result = await prune_tasks(prune_request)
+                actual_prune_result = await prune_tasks.fn(
+                    project_path=prune_request.project_path,
+                    dry_run=prune_request.dry_run
+                )
                 
                 if "error" not in actual_prune_result:
                     assert actual_prune_result["dry_run"] is False
-                    assert "removed_tasks" in actual_prune_result
+                    assert "pruned_tasks" in actual_prune_result
                     
                     # Step 3: Verify tasks were removed
                     analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
-                    final_analysis = await analyze_project_for_tasks(analyze_request)
+                    final_analysis = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
                     
                     assert "error" not in final_analysis
                     
                     # Removed tasks should no longer exist
                     remaining_task_names = [task["name"] for task in final_analysis["existing_tasks"]]
-                    removed_tasks = actual_prune_result["removed_tasks"]
+                    removed_tasks = actual_prune_result["pruned_tasks"]
                     
                     for removed_task in removed_tasks:
                         assert removed_task not in remaining_task_names
@@ -219,7 +242,7 @@ class TestTaskLifecycleWorkflows:
             validate_request = ValidateArchitectureRequest(project_path=str(project_path))
             
             # Step 1: Initial validation
-            initial_validation = await validate_task_architecture(validate_request)
+            initial_validation = await validate_task_architecture.fn(project_path=validate_request.project_path)
             assert "error" not in initial_validation
             
             initial_issues = len(initial_validation.get("issues", []))
@@ -248,10 +271,14 @@ class TestTaskLifecycleWorkflows:
                     suggested_name=task_info["name"]
                 )
                 
-                await create_task(create_request)
+                await create_task.fn(
+                    project_path=create_request.project_path,
+                    task_description=create_request.task_description,
+                    suggested_name=create_request.suggested_name
+                )
                 
             # Step 3: Validation after improvements
-            improved_validation = await validate_task_architecture(validate_request)
+            improved_validation = await validate_task_architecture.fn(project_path=validate_request.project_path)
             assert "error" not in improved_validation
             
             improved_issues = len(improved_validation.get("issues", []))
@@ -434,13 +461,13 @@ node = "18"
             
             # Analyze project - should recommend tasks based on scripts
             analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
-            analysis = await analyze_project_for_tasks(analyze_request)
+            analysis = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             
             assert "error" not in analysis
-            recommendations = analysis["recommendations"]
+            recommendations = analysis["recommended_tasks"]
             
             # Should recommend tasks for major script categories
-            rec_names = [r["task_name"] for r in recommendations]
+            rec_names = [r["name"] for r in recommendations]
             
             # Should have build, test, lint recommendations
             domains_in_recs = set()
@@ -525,20 +552,25 @@ depends = ["test", "lint"]
                     force_complexity="complex"  # Deployments are complex
                 )
                 
-                result = await create_task(create_request)
+                result = await create_task.fn(
+                    project_path=create_request.project_path,
+                    task_description=create_request.task_description,
+                    suggested_name=create_request.suggested_name,
+                    force_complexity=create_request.force_complexity
+                )
                 
                 if "error" not in result and result.get("success"):
                     created_deploy_tasks.append(result["task_name"])
                     
             # Validate the deployment workflow
             validate_request = ValidateArchitectureRequest(project_path=str(project_path))
-            validation = await validate_task_architecture(validate_request)
+            validation = await validate_task_architecture.fn(project_path=validate_request.project_path)
             
             assert "error" not in validation
             
             # Should have multiple deploy domain tasks now
-            final_analysis = await analyze_project_for_tasks(
-                AnalyzeProjectRequest(project_path=str(project_path))
+            final_analysis = await analyze_project_for_tasks.fn(
+                project_path=str(project_path)
             )
             
             deploy_tasks = [
@@ -646,7 +678,7 @@ depends = ["build:all", "test:all"]
                 
             # Analyze the complex monorepo
             analyze_request = AnalyzeProjectRequest(project_path=str(project_path))
-            analysis = await analyze_project_for_tasks(analyze_request)
+            analysis = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
             
             assert "error" not in analysis
             assert len(analysis["existing_tasks"]) > 10  # Should have many tasks
@@ -657,10 +689,13 @@ depends = ["build:all", "test:all"]
                 task_name="ci"
             )
             
-            trace_result = await trace_task_chain(trace_request)
+            trace_result = await trace_task_chain.fn(
+                project_path=trace_request.project_path,
+                task_name=trace_request.task_name
+            )
             
             if "error" not in trace_result:
-                assert trace_result["task_name"] == "ci"
+                assert trace_result["task_name"] == "ci:ci"  # Server returns full domain-prefixed name
                 # Should have complex execution order
                 assert len(trace_result["execution_order"]) > 5
                 # Should have parallel execution opportunities
@@ -668,7 +703,7 @@ depends = ["build:all", "test:all"]
                 
             # Validate architecture - should be well-structured
             validate_request = ValidateArchitectureRequest(project_path=str(project_path))
-            validation = await validate_task_architecture(validate_request)
+            validation = await validate_task_architecture.fn(project_path=validate_request.project_path)
             
             assert "error" not in validation
             # Should use multiple domains

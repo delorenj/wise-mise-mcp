@@ -112,22 +112,22 @@ async def analyze_project_for_tasks(
             ],
             "recommended_tasks": [
                 {
-                    "name": task.full_name,
-                    "domain": task.domain.value,
-                    "description": task.description,
-                    "complexity": task.complexity.value,
-                    "command": task.command,
-                    "sources": task.sources,
-                    "outputs": task.outputs,
-                    "dependencies": task.dependencies,
+                    "name": rec.task.full_name,
+                    "domain": rec.task.domain.value,
+                    "description": rec.task.description,
+                    "complexity": rec.task.complexity.value,
+                    "reasoning": rec.reasoning,
+                    "priority": rec.priority,
+                    "estimated_effort": rec.estimated_effort,
+                    "dependencies_needed": rec.dependencies_needed,
                 }
-                for task in recommendations
+                for rec in recommendations
             ],
             "summary": {
                 "total_existing": len(existing_tasks),
                 "total_recommended": len(recommendations),
                 "domains_covered": list(
-                    set(task.domain.value for task in recommendations)
+                    set(rec.task.domain.value for rec in recommendations)
                 ),
             },
         }
@@ -154,44 +154,39 @@ async def trace_task_chain(
             return {"error": f"Project path {project_path} does not exist"}
 
         analyzer = TaskAnalyzer(project_path_obj)
-        existing_tasks = analyzer.extract_existing_tasks()
-
-        # Find the target task
-        target_task = None
-        for task in existing_tasks:
-            if task.full_name == task_name or task.name == task_name:
-                target_task = task
-                break
-
-        if not target_task:
-            return {
-                "error": f"Task '{task_name}' not found",
-                "available_tasks": [task.full_name for task in existing_tasks],
-            }
-
-        # Build dependency graph
-        task_graph = analyzer.build_dependency_graph(existing_tasks)
-
-        # Trace the chain
-        chain = analyzer.trace_task_dependencies(target_task, task_graph)
-
+        
+        # Use the analyzer's trace_task_chain method
+        result = analyzer.trace_task_chain(task_name)
+        
+        # If there's an error, return it
+        if "error" in result:
+            existing_tasks = analyzer.extract_existing_tasks()
+            result["available_tasks"] = [task.full_name for task in existing_tasks]
+            return result
+        
+        # Transform to expected format
         return {
             "project_path": str(project_path_obj),
-            "target_task": task_name,
+            "task_name": result["task_name"],  # Keep original field name for compatibility
+            "target_task": result["task_name"],
+            "execution_order": result["execution_order"],  # Keep original field for compatibility
             "execution_chain": [
                 {
-                    "name": task.full_name,
-                    "domain": task.domain.value,
-                    "description": task.description,
-                    "command": task.command,
-                    "complexity": task.complexity.value,
+                    "name": task_name,
+                    "domain": details["domain"],
+                    "description": details["description"],
+                    "command": details["run"],
+                    "complexity": details["complexity"],
                 }
-                for task in chain
+                for task_name, details in result["task_details"].items()
+                if task_name in result["execution_order"]
             ],
-            "total_steps": len(chain),
-            "estimated_complexity": max(
-                (task.complexity for task in chain), default=TaskComplexity.SIMPLE
-            ).value,
+            "parallelizable_groups": result["parallelizable_groups"],  # Keep original for compatibility
+            "dependencies": result["dependencies"],
+            "dependents": result["dependents"],
+            "task_details": result["task_details"],
+            "total_steps": len(result["execution_order"]),
+            "estimated_complexity": "simple",  # Simple default
         }
 
     except Exception as e:
@@ -226,7 +221,7 @@ async def create_task(
 
         # Parse complexity if provided
         complexity = None
-        if force_complexity:
+        if force_complexity and isinstance(force_complexity, str):
             try:
                 complexity = TaskComplexity(force_complexity.lower())
             except ValueError:
@@ -237,7 +232,7 @@ async def create_task(
 
         # Parse domain hint if provided
         domain = None
-        if domain_hint:
+        if domain_hint and isinstance(domain_hint, str):
             try:
                 domain = TaskDomain(domain_hint.lower())
             except ValueError:
@@ -288,28 +283,13 @@ async def validate_task_architecture(
                 "message": "No tasks found to validate",
             }
 
-        # Build dependency graph for validation
-        task_graph = analyzer.build_dependency_graph(existing_tasks)
-
-        # Validate architecture
-        validation_result = analyzer.validate_architecture(existing_tasks, task_graph)
+        # Validate architecture using the analyzer's method
+        validation_result = analyzer.validate_task_architecture()
 
         return {
             "project_path": str(project_path_obj),
-            "validation_result": "success" if validation_result.is_valid else "issues_found",
-            "total_tasks": len(existing_tasks),
-            "issues": [
-                {
-                    "type": issue.type,
-                    "severity": issue.severity,
-                    "message": issue.message,
-                    "affected_tasks": issue.affected_tasks,
-                    "suggestions": issue.suggestions,
-                }
-                for issue in validation_result.issues
-            ],
-            "recommendations": validation_result.recommendations,
-            "score": validation_result.score,
+            "validation_result": "success" if not validation_result.get("issues") else "issues_found",
+            **validation_result  # Include all fields from analyzer (total_tasks, domains_used, etc.)
         }
 
     except Exception as e:
@@ -329,14 +309,12 @@ async def prune_tasks(
     be pruned (dry run) or actually remove the tasks.
     """
     try:
-        project_path = Path(request.project_path)
-        if not project_path.exists():
-            return {"error": f"Project path {request.project_path} does not exist"}
+        project_path_obj = Path(project_path)
+        if not project_path_obj.exists():
+            return {"error": f"Project path {project_path} does not exist"}
 
-        manager = TaskManager(project_path)
-
-        # Identify tasks to prune
-        prune_result = manager.identify_tasks_to_prune()
+        analyzer = TaskAnalyzer(project_path_obj)
+        redundant_tasks = analyzer.find_redundant_tasks()
 
         if dry_run:
             return {
@@ -344,30 +322,37 @@ async def prune_tasks(
                 "dry_run": True,
                 "tasks_to_prune": [
                     {
-                        "name": task.full_name,
-                        "reason": reason,
-                        "domain": task.domain.value,
-                        "description": task.description,
+                        "name": task.get("task", "unknown"),
+                        "reason": task.get("reason", "unknown"),
+                        "domain": "unknown",
                     }
-                    for task, reason in prune_result.items()
+                    for task in redundant_tasks
                 ],
-                "total_to_prune": len(prune_result),
+                "total_to_prune": len(redundant_tasks),
             }
         else:
             # Actually prune the tasks
-            pruned_tasks = manager.prune_tasks(prune_result)
+            manager = TaskManager(project_path_obj)
+            removed_tasks = []
+            for task_info in redundant_tasks:
+                task_name = task_info.get("task", "")
+                if task_name:
+                    result = manager.remove_task(task_name)
+                    if result.get("success"):
+                        removed_tasks.append(task_info)
+            
             return {
                 "project_path": str(project_path_obj),
                 "dry_run": False,
                 "pruned_tasks": [
                     {
-                        "name": task.full_name,
-                        "reason": reason,
-                        "domain": task.domain.value,
+                        "name": task.get("task", "unknown"),
+                        "reason": task.get("reason", "unknown"),
+                        "domain": "unknown",
                     }
-                    for task, reason in pruned_tasks.items()
+                    for task in removed_tasks
                 ],
-                "total_pruned": len(pruned_tasks),
+                "total_pruned": len(removed_tasks),
             }
 
     except Exception as e:
@@ -413,7 +398,7 @@ async def remove_task(
         dependents = analyzer.find_dependent_tasks(target_task, task_graph)
 
         # Remove the task
-        result = manager.remove_task(target_task)
+        result = manager.remove_task(target_task.full_name)
 
         return {
             "project_path": str(project_path_obj),
@@ -429,8 +414,8 @@ async def remove_task(
                 }
                 for task in dependents
             ],
-            "warnings": result.warnings if hasattr(result, "warnings") else [],
-            "success": True,
+            "warnings": result.get("warnings", []),
+            "success": result.get("success", True),
         }
 
     except Exception as e:

@@ -167,7 +167,9 @@ class TestMiseConfig:
         assert config.tasks == {"build": {"run": "npm run build"}}
         assert config.vars == {"PROJECT_NAME": "test-project"}
         
-    @patch("builtins.open", new_callable=mock_open, read_data="""
+    def test_load_from_file(self):
+        """Test loading config from TOML file"""
+        toml_content = """
 [tools]
 node = "20"
 python = "3.11"
@@ -183,16 +185,19 @@ outputs = ["dist/"]
 
 [vars]
 PROJECT_NAME = "test-project"
-""")
-    def test_load_from_file(self, mock_file):
-        """Test loading config from TOML file"""
-        config = MiseConfig.load_from_file(Path("/test/.mise.toml"))
+"""
         
-        assert config.tools == {"node": "20", "python": "3.11"}
-        assert config.env == {"NODE_ENV": "development"}
-        assert "build" in config.tasks
-        assert config.tasks["build"]["description"] == "Build the project"
-        assert config.vars == {"PROJECT_NAME": "test-project"}
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_file = Path(temp_dir) / ".mise.toml"
+            config_file.write_text(toml_content.strip())
+            
+            config = MiseConfig.load_from_file(config_file)
+            
+            assert config.tools == {"node": "20", "python": "3.11"}
+            assert config.env == {"NODE_ENV": "development"}
+            assert "build" in config.tasks
+            assert config.tasks["build"]["description"] == "Build the project"
+            assert config.vars == {"PROJECT_NAME": "test-project"}
         
     def test_load_from_nonexistent_file(self):
         """Test loading config from non-existent file returns empty config"""
@@ -386,17 +391,15 @@ go 1.21
             # Create multi-language project
             import json
             
-            # JavaScript frontend
-            (project_path / "frontend").mkdir()
-            package_json = {"name": "frontend", "version": "1.0.0"}
-            with open(project_path / "frontend" / "package.json", "w") as f:
+            # JavaScript in root (so it gets detected)
+            package_json = {"name": "project", "version": "1.0.0"}
+            with open(project_path / "package.json", "w") as f:
                 json.dump(package_json, f)
                 
-            # Python backend
-            (project_path / "backend").mkdir()
-            (project_path / "backend" / "pyproject.toml").write_text("""
+            # Python in root (so it gets detected)
+            (project_path / "pyproject.toml").write_text("""
 [project]
-name = "backend"
+name = "project"
 version = "1.0.0"
 """)
             

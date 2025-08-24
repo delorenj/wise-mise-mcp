@@ -71,7 +71,10 @@ class TestLargeProjectPerformance:
             graph = analyzer.build_dependency_graph(tasks)
             
             # Trace the deepest chain
-            trace_result = analyzer.trace_task_chain(f"task_{chain_depth - 1}")
+            trace_result = analyzer.trace_task_dependencies(
+                tasks[-1],  # Last task in chain
+                graph
+            )
             
             end_time = time.time()
             analysis_time = end_time - start_time
@@ -80,8 +83,7 @@ class TestLargeProjectPerformance:
             assert analysis_time < 5.0, f"Deep chain analysis took too long: {analysis_time}s"
             
             # Verify dependency chain structure
-            assert len(trace_result["execution_order"]) == chain_depth
-            assert len(trace_result["dependencies"]) == chain_depth - 1
+            assert len(trace_result) == chain_depth
             
             print(f"Traced {chain_depth}-deep chain in {analysis_time:.2f}s")
             
@@ -136,7 +138,7 @@ class TestLargeProjectPerformance:
             
             async def run_analysis():
                 request = AnalyzeProjectRequest(project_path=str(project_path))
-                return await analyze_project_for_tasks(request)
+                return await analyze_project_for_tasks.fn(project_path=request.project_path)
                 
             # Run concurrent analyses
             tasks = [run_analysis() for _ in range(num_concurrent)]

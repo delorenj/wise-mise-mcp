@@ -108,15 +108,14 @@ class TestAnalyzeProjectForTasks:
     @pytest.mark.asyncio
     async def test_analyze_existing_project(self, temp_project_dir):
         """Test analyzing existing project"""
-        request = AnalyzeProjectRequest(project_path=str(temp_project_dir))
         
-        result = await analyze_project_for_tasks(request)
+        result = await analyze_project_for_tasks.fn(project_path=str(temp_project_dir))
         
         assert "error" not in result
         assert "project_path" in result
         assert "project_structure" in result
         assert "existing_tasks" in result
-        assert "recommendations" in result
+        assert "recommended_tasks" in result
         
         # Verify project structure
         structure = result["project_structure"]
@@ -127,18 +126,17 @@ class TestAnalyzeProjectForTasks:
         # Verify existing tasks
         assert len(result["existing_tasks"]) > 0
         task_names = [task["name"] for task in result["existing_tasks"]]
-        assert "build" in task_names
-        assert "test" in task_names
+        assert "build:build" in task_names
+        assert "test:test" in task_names
         
         # Verify recommendations
-        assert len(result["recommendations"]) >= 0
+        assert len(result["recommended_tasks"]) >= 0
         
     @pytest.mark.asyncio
     async def test_analyze_nonexistent_project(self):
         """Test analyzing non-existent project"""
-        request = AnalyzeProjectRequest(project_path="/nonexistent/path")
         
-        result = await analyze_project_for_tasks(request)
+        result = await analyze_project_for_tasks.fn(project_path="/nonexistent/path")
         
         assert "error" in result
         assert "does not exist" in result["error"]
@@ -146,17 +144,17 @@ class TestAnalyzeProjectForTasks:
     @pytest.mark.asyncio 
     async def test_analyze_project_exception_handling(self):
         """Test exception handling in analyze_project_for_tasks"""
-        request = AnalyzeProjectRequest(project_path="/test")
         
-        with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
-            mock_analyzer = Mock()
-            mock_analyzer.analyze_project_structure.side_effect = Exception("Test error")
-            mock_analyzer_class.return_value = mock_analyzer
-            
-            result = await analyze_project_for_tasks(request)
-            
-            assert "error" in result
-            assert "Test error" in result["error"]
+        with patch('pathlib.Path.exists', return_value=True):
+            with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+                mock_analyzer = Mock()
+                mock_analyzer.analyze_project_structure.side_effect = Exception("Test error")
+                mock_analyzer_class.return_value = mock_analyzer
+                
+                result = await analyze_project_for_tasks.fn(project_path="/test")
+                
+                assert "error" in result
+                assert "Test error" in result["error"]
 
 
 class TestTraceTaskChain:
@@ -170,15 +168,30 @@ class TestTraceTaskChain:
             task_name="test"
         )
         
-        result = await trace_task_chain(request)
-        
-        assert "error" not in result or result.get("task_name") == "test"
-        if "task_name" in result:
-            assert result["task_name"] == "test"
-            assert "execution_order" in result
-            assert "dependencies" in result
-            assert "dependents" in result
-            assert "task_details" in result
+        with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+            mock_analyzer = Mock()
+            mock_analyzer.trace_task_chain.return_value = {
+                "task_name": "test",
+                "execution_order": ["test"],
+                "task_details": {
+                    "test": {
+                        "domain": "test",
+                        "description": "Test task",
+                        "run": "npm test",
+                        "complexity": "simple"
+                    }
+                }
+            }
+            mock_analyzer_class.return_value = mock_analyzer
+            
+            result = await trace_task_chain.fn(project_path=request.project_path, task_name=request.task_name)
+            
+            assert "error" not in result or result.get("target_task") == "test"
+            if "target_task" in result:
+                assert result["target_task"] == "test"
+                assert "execution_chain" in result
+                assert "total_steps" in result
+                assert "estimated_complexity" in result
             
     @pytest.mark.asyncio
     async def test_trace_nonexistent_task(self, temp_project_dir):
@@ -188,7 +201,7 @@ class TestTraceTaskChain:
             task_name="nonexistent"
         )
         
-        result = await trace_task_chain(request)
+        result = await trace_task_chain.fn(project_path=request.project_path, task_name=request.task_name)
         
         assert "error" in result
         assert "not found" in result["error"].lower()
@@ -201,7 +214,7 @@ class TestTraceTaskChain:
             task_name="build"
         )
         
-        result = await trace_task_chain(request)
+        result = await trace_task_chain.fn(project_path=request.project_path, task_name=request.task_name)
         
         assert "error" in result
         assert "does not exist" in result["error"]
@@ -228,10 +241,10 @@ class TestCreateTask:
             }
             mock_manager_class.return_value = mock_manager
             
-            result = await create_task(request)
+            result = await create_task.fn(project_path=request.project_path, task_description=request.task_description, suggested_name=request.suggested_name, force_complexity=request.force_complexity, domain_hint=request.domain_hint)
             
-            assert result["success"] is True
-            assert result["task_name"] == "test:coverage"
+            assert result["result"]["success"] is True
+            assert result["result"]["task_name"] == "test:coverage"
             
     @pytest.mark.asyncio
     async def test_create_task_with_force_complexity(self, temp_project_dir):
@@ -251,7 +264,7 @@ class TestCreateTask:
             }
             mock_manager_class.return_value = mock_manager
             
-            result = await create_task(request)
+            result = await create_task.fn(project_path=request.project_path, task_description=request.task_description, suggested_name=request.suggested_name, force_complexity=request.force_complexity, domain_hint=request.domain_hint)
             
             # Verify force_complexity was converted to enum
             mock_manager.create_task_intelligently.assert_called_once()
@@ -267,7 +280,7 @@ class TestCreateTask:
             force_complexity="invalid"
         )
         
-        result = await create_task(request)
+        result = await create_task.fn(project_path=request.project_path, task_description=request.task_description, suggested_name=request.suggested_name, force_complexity=request.force_complexity, domain_hint=request.domain_hint)
         
         assert "error" in result
         assert "Invalid complexity" in result["error"]
@@ -280,7 +293,7 @@ class TestCreateTask:
             task_description="Test task"
         )
         
-        result = await create_task(request)
+        result = await create_task.fn(project_path=request.project_path, task_description=request.task_description, suggested_name=request.suggested_name, force_complexity=request.force_complexity, domain_hint=request.domain_hint)
         
         assert "error" in result
         assert "does not exist" in result["error"]
@@ -294,7 +307,7 @@ class TestValidateTaskArchitecture:
         """Test validating existing project architecture"""
         request = ValidateArchitectureRequest(project_path=str(temp_project_dir))
         
-        result = await validate_task_architecture(request)
+        result = await validate_task_architecture.fn(project_path=request.project_path)
         
         assert "error" not in result
         # Should contain validation results from analyzer
@@ -304,7 +317,7 @@ class TestValidateTaskArchitecture:
         """Test validating non-existent project"""
         request = ValidateArchitectureRequest(project_path="/nonexistent/path")
         
-        result = await validate_task_architecture(request)
+        result = await validate_task_architecture.fn(project_path=request.project_path)
         
         assert "error" in result
         assert "does not exist" in result["error"]
@@ -328,7 +341,7 @@ class TestPruneTasks:
             ]
             mock_analyzer_class.return_value = mock_analyzer
             
-            result = await prune_tasks(request)
+            result = await prune_tasks.fn(project_path=request.project_path, dry_run=request.dry_run)
             
             assert result["dry_run"] is True
             assert "redundant_tasks" in result
@@ -354,7 +367,7 @@ class TestPruneTasks:
                 mock_manager.remove_task.return_value = {"success": True}
                 mock_manager_class.return_value = mock_manager
                 
-                result = await prune_tasks(request)
+                result = await prune_tasks.fn(project_path=request.project_path, dry_run=request.dry_run)
                 
                 assert result["dry_run"] is False
                 assert "removed_tasks" in result
@@ -365,7 +378,7 @@ class TestPruneTasks:
         """Test pruning tasks in non-existent project"""
         request = PruneTasksRequest(project_path="/nonexistent/path")
         
-        result = await prune_tasks(request)
+        result = await prune_tasks.fn(project_path=request.project_path, dry_run=True)
         
         assert "error" in result
         assert "does not exist" in result["error"]
@@ -390,7 +403,7 @@ class TestRemoveTask:
             }
             mock_manager_class.return_value = mock_manager
             
-            result = await remove_task(request)
+            result = await remove_task.fn(project_path=request.project_path, task_name=request.task_name)
             
             assert result["success"] is True
             assert "test:old" in result["message"]
@@ -410,7 +423,7 @@ class TestRemoveTask:
             }
             mock_manager_class.return_value = mock_manager
             
-            result = await remove_task(request)
+            result = await remove_task.fn(project_path=request.project_path, task_name=request.task_name)
             
             assert "error" in result
             assert "not found" in result["error"]
@@ -423,7 +436,7 @@ class TestRemoveTask:
             task_name="test"
         )
         
-        result = await remove_task(request)
+        result = await remove_task.fn(project_path=request.project_path, task_name=request.task_name)
         
         assert "error" in result
         assert "does not exist" in result["error"]
@@ -437,7 +450,7 @@ class TestGetTaskRecommendations:
         """Test getting task recommendations"""
         request = AnalyzeProjectRequest(project_path=str(temp_project_dir))
         
-        result = await get_task_recommendations(request)
+        result = await get_task_recommendations.fn()
         
         assert "error" not in result
         assert "project_path" in result
@@ -457,7 +470,7 @@ class TestGetTaskRecommendations:
         """Test getting recommendations for non-existent project"""
         request = AnalyzeProjectRequest(project_path="/nonexistent/path")
         
-        result = await get_task_recommendations(request)
+        result = await get_task_recommendations.fn()
         
         assert "error" in result
         assert "does not exist" in result["error"]
@@ -469,7 +482,7 @@ class TestGetMiseArchitectureRules:
     @pytest.mark.asyncio
     async def test_get_architecture_rules(self):
         """Test getting mise architecture rules"""
-        result = await get_mise_architecture_rules()
+        result = await get_mise_architecture_rules.fn()
         
         assert "domains" in result
         assert "naming_conventions" in result
@@ -507,7 +520,7 @@ class TestPromptFunctions:
     @pytest.mark.asyncio
     async def test_mise_task_expert_guidance(self):
         """Test mise task expert guidance prompt"""
-        result = await mise_task_expert_guidance()
+        result = await mise_task_expert_guidance.fn()
         
         assert isinstance(result, str)
         assert len(result) > 100  # Should be substantial guidance
@@ -523,7 +536,7 @@ class TestPromptFunctions:
     @pytest.mark.asyncio
     async def test_task_chain_analyst(self):
         """Test task chain analyst prompt"""
-        result = await task_chain_analyst()
+        result = await task_chain_analyst.fn()
         
         assert isinstance(result, str)
         assert len(result) > 100  # Should be substantial guidance
@@ -583,7 +596,7 @@ class TestServerIntegration:
         ]
         
         for tool_func, request in tools_to_test:
-            result = await tool_func(request)
+            result = await tool_func.fn(project_path=request.project_path) if hasattr(request, "project_path") else await tool_func.fn()
             
             # All should return error dict instead of raising exception
             assert isinstance(result, dict)

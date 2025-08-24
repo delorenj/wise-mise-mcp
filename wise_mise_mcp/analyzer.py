@@ -102,6 +102,13 @@ class TaskAnalyzer:
         """Build a directed graph of task dependencies"""
         graph = nx.DiGraph()
 
+        # Create mapping from simple name to full name
+        name_to_full = {}
+        for task in tasks:
+            name_to_full[task.name] = task.full_name
+            # Also map full name to itself for flexibility
+            name_to_full[task.full_name] = task.full_name
+
         # Add all tasks as nodes
         for task in tasks:
             graph.add_node(task.full_name, task=task)
@@ -109,16 +116,22 @@ class TaskAnalyzer:
         # Add dependency edges
         for task in tasks:
             for dep in task.depends:
-                if graph.has_node(dep):
-                    graph.add_edge(dep, task.full_name, type="depends")
+                # Resolve dependency name to full name
+                dep_full = name_to_full.get(dep, dep)
+                if graph.has_node(dep_full):
+                    graph.add_edge(dep_full, task.full_name, type="depends")
 
             for dep in task.depends_post:
-                if graph.has_node(dep):
-                    graph.add_edge(task.full_name, dep, type="depends_post")
+                # Resolve dependency name to full name
+                dep_full = name_to_full.get(dep, dep)
+                if graph.has_node(dep_full):
+                    graph.add_edge(task.full_name, dep_full, type="depends_post")
 
             for dep in task.wait_for:
-                if graph.has_node(dep):
-                    graph.add_edge(dep, task.full_name, type="wait_for")
+                # Resolve dependency name to full name
+                dep_full = name_to_full.get(dep, dep)
+                if graph.has_node(dep_full):
+                    graph.add_edge(dep_full, task.full_name, type="wait_for")
 
         return graph
 
@@ -127,8 +140,15 @@ class TaskAnalyzer:
         tasks = self.extract_existing_tasks()
         graph = self.build_dependency_graph(tasks)
 
+        # Try to resolve task name to full name if needed
         if task_name not in graph:
-            return {"error": f"Task '{task_name}' not found"}
+            # Try to find by simple name
+            for task in tasks:
+                if task.name == task_name:
+                    task_name = task.full_name
+                    break
+            else:
+                return {"error": f"Task '{task_name}' not found"}
 
         # Find all predecessors (dependencies)
         predecessors = list(nx.ancestors(graph, task_name))
@@ -339,3 +359,49 @@ class TaskAnalyzer:
             score += 0.1
 
         return score
+
+    def find_dependent_tasks(self, target_task: TaskDefinition, graph: nx.DiGraph) -> List[TaskDefinition]:
+        """Find tasks that depend on the target task"""
+        if target_task.full_name not in graph:
+            return []
+        
+        dependent_names = list(nx.descendants(graph, target_task.full_name))
+        return [graph.nodes[name]["task"] for name in dependent_names]
+
+    def validate_architecture(self, tasks: List[TaskDefinition], graph: nx.DiGraph) -> any:
+        """Validate task architecture and return validation result"""
+        from types import SimpleNamespace
+        
+        issues = []
+        recommendations = []
+        
+        # Check for circular dependencies
+        try:
+            nx.find_cycle(graph)
+            issues.append(SimpleNamespace(
+                type="circular_dependency",
+                severity="high", 
+                message="Circular dependencies detected",
+                affected_tasks=[],
+                suggestions=["Break the circular dependency by restructuring tasks"]
+            ))
+        except nx.NetworkXNoCycle:
+            pass
+            
+        # Check for missing descriptions
+        no_description = [task.full_name for task in tasks if not task.description]
+        if no_description:
+            issues.append(SimpleNamespace(
+                type="missing_description",
+                severity="medium",
+                message=f"Tasks missing descriptions: {no_description}",
+                affected_tasks=no_description,
+                suggestions=["Add descriptions to improve task clarity"]
+            ))
+        
+        return SimpleNamespace(
+            is_valid=len(issues) == 0,
+            issues=issues,
+            recommendations=recommendations,
+            score=max(0, 100 - len(issues) * 20)
+        )

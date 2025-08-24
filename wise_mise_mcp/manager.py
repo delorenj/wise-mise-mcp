@@ -42,6 +42,15 @@ class TaskManager:
         force_complexity: Optional[TaskComplexity] = None,
     ) -> Dict[str, Any]:
         """Intelligently create a task based on description"""
+        
+        # Handle string complexity values from server
+        if isinstance(force_complexity, str):
+            try:
+                force_complexity = TaskComplexity(force_complexity.lower())
+            except ValueError:
+                return {
+                    "error": f"Invalid complexity '{force_complexity}'. Must be one of: {[c.value for c in TaskComplexity]}"
+                }
 
         # Find appropriate expert
         expert = self.analyzer.find_expert_for_task(task_description)
@@ -424,7 +433,7 @@ echo "✅ {task_def.name} completed successfully"
         # For now, just ensure the structure is documented
 
         docs_dir = self.mise_dir / "docs"
-        docs_dir.mkdir(exist_ok=True)
+        docs_dir.mkdir(parents=True, exist_ok=True)
 
         readme_path = docs_dir / "tasks.md"
 

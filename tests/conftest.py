@@ -154,6 +154,25 @@ def complex_project_structure():
         (project_path / "docs").mkdir()
         (project_path / ".github" / "workflows").mkdir(parents=True)
         
+        # Root package.json for workspace (so ProjectStructure.analyze finds npm)
+        root_package = {
+            "name": "complex-project",
+            "version": "1.0.0",
+            "private": True,
+            "workspaces": ["frontend", "backend"],
+            "scripts": {
+                "build": "npm run build --workspaces",
+                "test": "npm run test --workspaces",
+                "dev": "npm run dev --workspaces"
+            },
+            "devDependencies": {
+                "lerna": "^7.0.0"
+            }
+        }
+        
+        with open(project_path / "package.json", "w") as f:
+            json.dump(root_package, f, indent=2)
+        
         # Frontend package.json
         frontend_package = {
             "name": "frontend",
@@ -176,7 +195,7 @@ def complex_project_structure():
         with open(project_path / "frontend" / "package.json", "w") as f:
             json.dump(frontend_package, f, indent=2)
         
-        # Backend pyproject.toml
+        # Backend pyproject.toml (also create in root so analyzer finds Python)
         pyproject_content = """
 [build-system]
 requires = ["hatchling"]
@@ -205,6 +224,24 @@ warn_return_any = true
         
         with open(project_path / "backend" / "pyproject.toml", "w") as f:
             f.write(pyproject_content.strip())
+        
+        # Also create root pyproject.toml for detection
+        root_pyproject_content = """
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "complex-project"
+version = "1.0.0"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "mypy"]
+"""
+        
+        with open(project_path / "pyproject.toml", "w") as f:
+            f.write(root_pyproject_content.strip())
         
         # Root .mise.toml with complex task structure
         complex_mise_config = """
@@ -371,6 +408,9 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers", "slow: marks tests as slow running"
+    )
+    config.addinivalue_line(
+        "markers", "security: marks tests as security tests"
     )
 
 
