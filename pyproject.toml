@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "wise-mise-mcp"
-version = "2.1.0"
+version = "2.1.1"
 description = "An intelligent MCP server for wise mise task management and organization"
 readme = "README.md"
 requires-python = ">=3.11"
