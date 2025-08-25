@@ -2,9 +2,8 @@
 Domain experts for analyzing projects and recommending tasks
 """
 
-from abc import ABC, abstractmethod
-from typing import List
 import json
+from abc import ABC, abstractmethod
 
 from .models import TaskDefinition, TaskDomain, TaskComplexity, ProjectStructure, TaskRecommendation
 
@@ -19,7 +18,7 @@ class DomainExpert(ABC):
         pass
 
     @abstractmethod
-    def analyze_project(self, structure: ProjectStructure) -> List[TaskRecommendation]:
+    def analyze_project(self, structure: ProjectStructure) -> list[TaskRecommendation]:
         """Analyze project structure and recommend tasks for this domain"""
         pass
 
@@ -36,7 +35,7 @@ class BuildExpert(DomainExpert):
     def domain(self) -> TaskDomain:
         return TaskDomain.BUILD
 
-    def analyze_project(self, structure: ProjectStructure) -> List[TaskRecommendation]:
+    def analyze_project(self, structure: ProjectStructure) -> list[TaskRecommendation]:
         recommendations = []
 
         # JavaScript/Node.js builds
@@ -156,7 +155,7 @@ class TestExpert(DomainExpert):
     def domain(self) -> TaskDomain:
         return TaskDomain.TEST
 
-    def analyze_project(self, structure: ProjectStructure) -> List[TaskRecommendation]:
+    def analyze_project(self, structure: ProjectStructure) -> list[TaskRecommendation]:
         recommendations = []
 
         if not structure.has_tests:
@@ -274,7 +273,7 @@ class LintExpert(DomainExpert):
     def domain(self) -> TaskDomain:
         return TaskDomain.LINT
 
-    def analyze_project(self, structure: ProjectStructure) -> List[TaskRecommendation]:
+    def analyze_project(self, structure: ProjectStructure) -> list[TaskRecommendation]:
         recommendations = []
 
         # JavaScript linting
@@ -409,7 +408,7 @@ class DevExpert(DomainExpert):
     def domain(self) -> TaskDomain:
         return TaskDomain.DEV
 
-    def analyze_project(self, structure: ProjectStructure) -> List[TaskRecommendation]:
+    def analyze_project(self, structure: ProjectStructure) -> list[TaskRecommendation]:
         recommendations = []
 
         # Development server tasks

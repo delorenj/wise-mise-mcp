@@ -4,7 +4,6 @@ Wise Mise MCP Server
 An intelligent MCP server for wise mise task management and organization.
 """
 
-import sys
 from importlib.metadata import version, PackageNotFoundError
 
 from .server import app

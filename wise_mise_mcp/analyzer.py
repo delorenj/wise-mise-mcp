@@ -2,10 +2,10 @@
 Task analysis and management utilities
 """
 
-from typing import Dict, List, Optional
-from pathlib import Path
-import networkx as nx
 from collections import defaultdict
+from pathlib import Path
+
+import networkx as nx
 
 from .models import TaskDefinition, TaskDomain, MiseConfig, ProjectStructure, TaskRecommendation
 from .experts import DomainExpert, BuildExpert, TestExpert, LintExpert, DevExpert
@@ -25,7 +25,7 @@ class TaskAnalyzer:
     def __init__(self, project_path: Path):
         self.project_path = project_path
         self.mise_config = MiseConfig.load_from_file(project_path / ".mise.toml")
-        self.experts: List[DomainExpert] = [
+        self.experts: list[DomainExpert] = [
             BuildExpert(),
             TestExpert(),
             LintExpert(),
@@ -42,7 +42,7 @@ class TaskAnalyzer:
         """Analyze the project structure for task recommendations"""
         return ProjectStructure.analyze(self.project_path)
 
-    def extract_existing_tasks(self) -> List[TaskDefinition]:
+    def extract_existing_tasks(self) -> list[TaskDefinition]:
         """Extract all existing tasks from mise configuration"""
         tasks = []
 
@@ -98,7 +98,7 @@ class TaskAnalyzer:
         # Default to BUILD if unclear
         return TaskDomain.BUILD
 
-    def build_dependency_graph(self, tasks: List[TaskDefinition]) -> nx.DiGraph:
+    def build_dependency_graph(self, tasks: list[TaskDefinition]) -> nx.DiGraph:
         """Build a directed graph of task dependencies"""
         graph = nx.DiGraph()
 
@@ -135,7 +135,7 @@ class TaskAnalyzer:
 
         return graph
 
-    def trace_task_chain(self, task_name: str) -> Dict[str, any]:
+    def trace_task_chain(self, task_name: str) -> dict[str, any]:
         """Trace the full execution chain for a task"""
         tasks = self.extract_existing_tasks()
         graph = self.build_dependency_graph(tasks)
@@ -182,7 +182,7 @@ class TaskAnalyzer:
             "parallelizable_groups": self._find_parallel_groups(subgraph),
         }
 
-    def _find_parallel_groups(self, graph: nx.DiGraph) -> List[List[str]]:
+    def _find_parallel_groups(self, graph: nx.DiGraph) -> list[list[str]]:
         """Find groups of tasks that can run in parallel"""
         levels = []
         remaining = set(graph.nodes())
@@ -203,7 +203,7 @@ class TaskAnalyzer:
 
         return levels
 
-    def get_task_recommendations(self) -> List[TaskRecommendation]:
+    def get_task_recommendations(self) -> list[TaskRecommendation]:
         """Get recommendations for new tasks based on project analysis"""
         structure = self.analyze_project_structure()
         existing_tasks = {task.full_name for task in self.extract_existing_tasks()}
@@ -223,14 +223,14 @@ class TaskAnalyzer:
 
         return all_recommendations
 
-    def find_expert_for_task(self, task_description: str) -> Optional[DomainExpert]:
+    def find_expert_for_task(self, task_description: str) -> DomainExpert | None:
         """Find the best expert to handle a task description"""
         for expert in self.experts:
             if expert.can_handle_task(task_description):
                 return expert
         return None
 
-    def validate_task_architecture(self) -> Dict[str, any]:
+    def validate_task_architecture(self) -> dict[str, any]:
         """Validate that the current task setup follows best practices"""
         tasks = self.extract_existing_tasks()
         graph = self.build_dependency_graph(tasks)
@@ -290,7 +290,7 @@ class TaskAnalyzer:
             "orphaned_tasks": orphaned,
         }
 
-    def find_redundant_tasks(self) -> List[Dict[str, any]]:
+    def find_redundant_tasks(self) -> list[dict[str, any]]:
         """Find tasks that might be redundant or outdated"""
         tasks = self.extract_existing_tasks()
         redundant = []
@@ -360,34 +360,34 @@ class TaskAnalyzer:
 
         return score
 
-    def find_dependent_tasks(self, target_task: TaskDefinition, graph: nx.DiGraph) -> List[TaskDefinition]:
+    def find_dependent_tasks(self, target_task: TaskDefinition, graph: nx.DiGraph) -> list[TaskDefinition]:
         """Find tasks that depend on the target task"""
         if target_task.full_name not in graph:
             return []
-        
+
         dependent_names = list(nx.descendants(graph, target_task.full_name))
         return [graph.nodes[name]["task"] for name in dependent_names]
 
-    def validate_architecture(self, tasks: List[TaskDefinition], graph: nx.DiGraph) -> any:
+    def validate_architecture(self, tasks: list[TaskDefinition], graph: nx.DiGraph) -> any:
         """Validate task architecture and return validation result"""
         from types import SimpleNamespace
-        
+
         issues = []
         recommendations = []
-        
+
         # Check for circular dependencies
         try:
             nx.find_cycle(graph)
             issues.append(SimpleNamespace(
                 type="circular_dependency",
-                severity="high", 
+                severity="high",
                 message="Circular dependencies detected",
                 affected_tasks=[],
                 suggestions=["Break the circular dependency by restructuring tasks"]
             ))
         except nx.NetworkXNoCycle:
             pass
-            
+
         # Check for missing descriptions
         no_description = [task.full_name for task in tasks if not task.description]
         if no_description:
@@ -398,7 +398,7 @@ class TaskAnalyzer:
                 affected_tasks=no_description,
                 suggestions=["Add descriptions to improve task clarity"]
             ))
-        
+
         return SimpleNamespace(
             is_valid=len(issues) == 0,
             issues=issues,

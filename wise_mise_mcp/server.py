@@ -2,17 +2,18 @@
 FastMCP server for intelligent mise task management
 """
 
+import os
 import sys
-from importlib.metadata import version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastmcp import FastMCP
 from pydantic import BaseModel, Field
 
-from .models import TaskDomain, TaskComplexity
 from .analyzer import TaskAnalyzer
 from .manager import TaskManager
+from .models import TaskComplexity, TaskDomain
 
 # Get version from package metadata
 try:
@@ -34,11 +35,11 @@ class TraceTaskChainRequest(BaseModel):
 class CreateTaskRequest(BaseModel):
     project_path: str = Field(description="Path to the project directory")
     task_description: str = Field(description="Description of what the task should do")
-    suggested_name: Optional[str] = Field(None, description="Suggested task name")
-    force_complexity: Optional[str] = Field(
+    suggested_name: str | None = Field(None, description="Suggested task name")
+    force_complexity: str | None = Field(
         None, description="Force complexity level (simple/moderate/complex)"
     )
-    domain_hint: Optional[str] = Field(
+    domain_hint: str | None = Field(
         None, description="Hint about which domain this task belongs to"
     )
 
@@ -64,7 +65,7 @@ app = FastMCP("Wise Mise MCP")
 @app.tool()
 async def analyze_project_for_tasks(
     project_path: str = Field(description="Path to the project directory")
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Analyze a project structure and extract strategic task recommendations.
 
@@ -75,20 +76,20 @@ async def analyze_project_for_tasks(
     """
     try:
         project_path_obj = Path(project_path)
-        
+
         # Security validation: reject potentially dangerous paths
         dangerous_paths = ['/etc', '/proc', '/sys', '/dev', '/bin', '/sbin', '/usr/bin', '/usr/sbin']
         resolved_path = project_path_obj.resolve()
-        
+
         # Check if path is in dangerous system directories
         for dangerous in dangerous_paths:
             if str(resolved_path).startswith(dangerous):
                 return {"error": f"Access denied: {project_path} is not allowed for security reasons"}
-        
+
         # Check for path traversal attempts
         if '..' in str(project_path_obj) or str(resolved_path) != str(project_path_obj.absolute()):
             return {"error": f"Access denied: Path traversal detected in {project_path}"}
-        
+
         if not project_path_obj.exists():
             return {"error": f"Project path {project_path} does not exist"}
 
@@ -154,7 +155,7 @@ async def analyze_project_for_tasks(
 async def trace_task_chain(
     project_path: str = Field(description="Path to the project directory"),
     task_name: str = Field(description="Name of the task to trace")
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Trace the dependency chain for a specific task.
 
@@ -168,16 +169,16 @@ async def trace_task_chain(
             return {"error": f"Project path {project_path} does not exist"}
 
         analyzer = TaskAnalyzer(project_path_obj)
-        
+
         # Use the analyzer's trace_task_chain method
         result = analyzer.trace_task_chain(task_name)
-        
+
         # If there's an error, return it
         if "error" in result:
             existing_tasks = analyzer.extract_existing_tasks()
             result["available_tasks"] = [task.full_name for task in existing_tasks]
             return result
-        
+
         # Transform to expected format
         return {
             "project_path": str(project_path_obj),
@@ -211,14 +212,14 @@ async def trace_task_chain(
 async def create_task(
     project_path: str = Field(description="Path to the project directory"),
     task_description: str = Field(description="Description of what the task should do"),
-    suggested_name: Optional[str] = Field(None, description="Suggested task name"),
-    force_complexity: Optional[str] = Field(
+    suggested_name: str | None = Field(None, description="Suggested task name"),
+    force_complexity: str | None = Field(
         None, description="Force complexity level (simple/moderate/complex)"
     ),
-    domain_hint: Optional[str] = Field(
+    domain_hint: str | None = Field(
         None, description="Hint about which domain this task belongs to"
     )
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create a new task with intelligent placement and configuration.
 
@@ -274,7 +275,7 @@ async def create_task(
 @app.tool()
 async def validate_task_architecture(
     project_path: str = Field(description="Path to the project directory")
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validate the current task architecture against best practices.
 
@@ -314,7 +315,7 @@ async def validate_task_architecture(
 async def prune_tasks(
     project_path: str = Field(description="Path to the project directory"),
     dry_run: bool = Field(True, description="Whether to only report what would be pruned")
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Remove redundant or outdated tasks from the project.
 
@@ -354,7 +355,7 @@ async def prune_tasks(
                     result = manager.remove_task(task_name)
                     if result.get("success"):
                         removed_tasks.append(task_info)
-            
+
             return {
                 "project_path": str(project_path_obj),
                 "dry_run": False,
@@ -377,7 +378,7 @@ async def prune_tasks(
 async def remove_task(
     project_path: str = Field(description="Path to the project directory"),
     task_name: str = Field(description="Name of the task to remove")
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Remove a specific task from the project.
 
@@ -437,7 +438,7 @@ async def remove_task(
 
 
 @app.tool()
-async def get_task_recommendations() -> Dict[str, Any]:
+async def get_task_recommendations() -> dict[str, Any]:
     """
     Get general recommendations for mise task organization and best practices.
 
@@ -491,7 +492,7 @@ async def get_task_recommendations() -> Dict[str, Any]:
 
 
 @app.tool()
-async def get_mise_architecture_rules() -> Dict[str, Any]:
+async def get_mise_architecture_rules() -> dict[str, Any]:
     """
     Get the architectural rules and patterns that Wise Mise MCP follows.
 
@@ -559,7 +560,7 @@ async def get_mise_architecture_rules() -> Dict[str, Any]:
 
 
 @app.tool()
-async def mise_task_expert_guidance() -> Dict[str, Any]:
+async def mise_task_expert_guidance() -> dict[str, Any]:
     """
     Get expert guidance on mise task management and optimization.
 
@@ -631,7 +632,7 @@ async def mise_task_expert_guidance() -> Dict[str, Any]:
 
 
 @app.tool()
-async def task_chain_analyst() -> Dict[str, Any]:
+async def task_chain_analyst() -> dict[str, Any]:
     """
     Analyze and optimize task execution chains for better performance.
 
@@ -679,15 +680,13 @@ async def task_chain_analyst() -> Dict[str, Any]:
 
 def main():
     """Main entry point for the MCP server."""
-    import sys
-    import os
-    
+
     # For Docker/HTTP deployment, check if we should use HTTP transport
     if ('--transport' in sys.argv and 'http' in sys.argv) or '--http' in sys.argv or os.getenv('MCP_TRANSPORT') == 'http':
         # Run with HTTP transport for Docker/web deployment
         port = 3000
         host = "0.0.0.0"
-        
+
         # Parse port from command line args
         try:
             if '--port' in sys.argv:
@@ -695,7 +694,7 @@ def main():
                 port = int(sys.argv[port_idx])
         except (ValueError, IndexError):
             port = 3000
-            
+
         # Parse host from command line args
         try:
             if '--host' in sys.argv:
@@ -703,9 +702,9 @@ def main():
                 host = sys.argv[host_idx]
         except IndexError:
             host = "0.0.0.0"
-            
+
         print(f"Starting HTTP MCP server on {host}:{port}")
-        
+
         # Add health check endpoint for Docker - access underlying FastAPI app
         try:
             @app.app.get("/health")
@@ -713,7 +712,7 @@ def main():
                 return {"status": "healthy", "service": "wise-mise-mcp"}
         except Exception as e:
             print(f"Could not add health endpoint: {e}")
-            
+
         app.run(transport="http", host=host, port=port, path="/mcp")
     else:
         # Default to stdio transport
