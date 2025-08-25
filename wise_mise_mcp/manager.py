@@ -2,17 +2,17 @@
 Task creation and management utilities
 """
 
-from typing import Dict, Optional, Any
-from pathlib import Path
 import os
+from pathlib import Path
+from typing import Any
 
+from .analyzer import TaskAnalyzer
 from .models import (
+    MiseConfig,
+    TaskComplexity,
     TaskDefinition,
     TaskDomain,
-    TaskComplexity,
-    MiseConfig,
 )
-from .analyzer import TaskAnalyzer
 
 
 class TaskManager:
@@ -38,11 +38,11 @@ class TaskManager:
     def create_task_intelligently(
         self,
         task_description: str,
-        suggested_name: Optional[str] = None,
-        force_complexity: Optional[TaskComplexity] = None,
-    ) -> Dict[str, Any]:
+        suggested_name: str | None = None,
+        force_complexity: TaskComplexity | None = None,
+    ) -> dict[str, Any]:
         """Intelligently create a task based on description"""
-        
+
         # Handle string complexity values from server
         if isinstance(force_complexity, str):
             try:
@@ -317,7 +317,7 @@ echo "✅ {task_def.name} completed successfully"
 
         return content
 
-    def _add_task_to_config(self, task_def: TaskDefinition) -> Dict[str, Any]:
+    def _add_task_to_config(self, task_def: TaskDefinition) -> dict[str, Any]:
         """Add task to mise configuration"""
         try:
             # Load current config
@@ -378,7 +378,7 @@ echo "✅ {task_def.name} completed successfully"
         except Exception as e:
             return {"error": f"Failed to add task: {str(e)}"}
 
-    def remove_task(self, task_name: str) -> Dict[str, Any]:
+    def remove_task(self, task_name: str) -> dict[str, Any]:
         """Remove a task from configuration"""
         try:
             # Load current config
@@ -404,7 +404,7 @@ echo "✅ {task_def.name} completed successfully"
         except Exception as e:
             return {"error": f"Failed to remove task: {str(e)}"}
 
-    def _find_task_file(self, task_name: str) -> Optional[Path]:
+    def _find_task_file(self, task_name: str) -> Path | None:
         """Find the file for a given task name"""
         # Extract domain and name
         if ":" in task_name:

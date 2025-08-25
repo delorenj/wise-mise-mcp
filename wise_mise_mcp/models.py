@@ -2,10 +2,11 @@
 Core models and data structures for mise task management
 """
 
-from typing import Dict, List, Optional, Set, Union, Any
-from enum import Enum
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
+from typing import Any, Union
+
 try:
     import tomllib
 except ImportError:
@@ -43,19 +44,19 @@ class TaskDefinition:
     name: str
     domain: TaskDomain
     description: str
-    run: Union[str, List[str]]
-    depends: List[str] = field(default_factory=list)
-    depends_post: List[str] = field(default_factory=list)
-    wait_for: List[str] = field(default_factory=list)
-    sources: List[str] = field(default_factory=list)
-    outputs: List[str] = field(default_factory=list)
-    env: Dict[str, str] = field(default_factory=dict)
-    dir: Optional[str] = None
-    alias: Optional[str] = None
+    run: Union[str, list[str]]
+    depends: list[str] = field(default_factory=list)
+    depends_post: list[str] = field(default_factory=list)
+    wait_for: list[str] = field(default_factory=list)
+    sources: list[str] = field(default_factory=list)
+    outputs: list[str] = field(default_factory=list)
+    env: dict[str, str] = field(default_factory=dict)
+    dir: str | None = None
+    alias: str | None = None
     hide: bool = False
-    confirm: Optional[str] = None
+    confirm: str | None = None
     complexity: TaskComplexity = TaskComplexity.SIMPLE
-    file_path: Optional[Path] = None  # For file tasks
+    file_path: Path | None = None  # For file tasks
 
     @property
     def full_name(self) -> str:
@@ -74,11 +75,11 @@ class TaskDefinition:
 class MiseConfig:
     """Represents a mise.toml configuration"""
 
-    tools: Dict[str, str] = field(default_factory=dict)
-    env: Dict[str, str] = field(default_factory=dict)
-    tasks: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    vars: Dict[str, str] = field(default_factory=dict)
-    task_config: Dict[str, Any] = field(default_factory=dict)
+    tools: dict[str, str] = field(default_factory=dict)
+    env: dict[str, str] = field(default_factory=dict)
+    tasks: dict[str, dict[str, Any]] = field(default_factory=dict)
+    vars: dict[str, str] = field(default_factory=dict)
+    task_config: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def load_from_file(cls, path: Path) -> "MiseConfig":
@@ -121,15 +122,15 @@ class ProjectStructure:
     """Represents the structure of a project for analysis"""
 
     root_path: Path
-    package_managers: Set[str] = field(default_factory=set)  # npm, cargo, pip, etc.
-    languages: Set[str] = field(default_factory=set)  # js, rust, python, etc.
-    frameworks: Set[str] = field(default_factory=set)  # react, fastapi, etc.
+    package_managers: set[str] = field(default_factory=set)  # npm, cargo, pip, etc.
+    languages: set[str] = field(default_factory=set)  # js, rust, python, etc.
+    frameworks: set[str] = field(default_factory=set)  # react, fastapi, etc.
     has_tests: bool = False
     has_docs: bool = False
     has_ci: bool = False
     has_database: bool = False
-    build_artifacts: List[str] = field(default_factory=list)
-    source_dirs: List[str] = field(default_factory=list)
+    build_artifacts: list[str] = field(default_factory=list)
+    source_dirs: list[str] = field(default_factory=list)
 
     @classmethod
     def analyze(cls, path: Path) -> "ProjectStructure":
@@ -185,4 +186,4 @@ class TaskRecommendation:
     reasoning: str
     priority: int  # 1-10, higher = more important
     estimated_effort: str  # "low", "medium", "high"
-    dependencies_needed: List[str] = field(default_factory=list)
+    dependencies_needed: list[str] = field(default_factory=list)
