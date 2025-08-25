@@ -7,6 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation](https://img.shields.io/badge/docs-readthedocs-blue.svg)](https://wise-mise-mcp.readthedocs.io)
+[![Deploy to Smithery](https://smithery.ai/badge)](https://smithery.ai/server/wise-mise-mcp)
 
 **Stop wrestling with mise configuration.** Wise Mise MCP brings enterprise-grade intelligence to your [mise](https://mise.jdx.dev/) workflow, automatically analyzing your project structure and creating perfectly organized, maintainable task architectures that scale with your development needs.
 
@@ -62,6 +63,26 @@ Add to your MCP client configuration (e.g., Claude Desktop):
   }
 }
 ```
+
+### Deploy with Smithery (One-Click Deployment)
+
+[![Deploy to Smithery](https://smithery.ai/badge)](https://smithery.ai/server/wise-mise-mcp)
+
+Deploy Wise Mise MCP instantly to Smithery's cloud infrastructure with one click. Smithery provides managed MCP server hosting with built-in monitoring, scaling, and zero-configuration deployment.
+
+**Quick Smithery Deployment:**
+1. Click the "Deploy to Smithery" badge above
+2. Connect your GitHub account (if needed)
+3. Your MCP server will be automatically deployed and configured
+4. Use the provided endpoint in your MCP client configuration
+
+**Benefits of Smithery Deployment:**
+- ✅ Zero server management overhead
+- ✅ Automatic scaling and load balancing  
+- ✅ Built-in monitoring and health checks
+- ✅ Global CDN for low-latency access
+- ✅ Automatic SSL/TLS encryption
+- ✅ Integration with popular MCP clients
 
 ## What Makes It "Wise"?
 

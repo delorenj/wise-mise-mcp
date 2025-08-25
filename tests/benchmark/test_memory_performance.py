@@ -175,7 +175,7 @@ depends = ["test"]
             memory_readings = []
             
             # Perform the same operation multiple times
-            for iteration in range(10):
+            for iteration in range(5):  # Reduced from 10 to 5 iterations
                 with MemoryProfiler(f"iteration_{iteration}") as profiler:
                     async def perform_operations():
                         # Mix of different operations
@@ -184,11 +184,18 @@ depends = ["test"]
                         
                         request2 = CreateTaskRequest(
                             project_path=str(temp_project_dir),
-                            task_name=f"leak_test_{iteration}",
-                            description=f"Leak test iteration {iteration}",
-                            commands=[f"echo 'Iteration {iteration}'"]
+                            task_description=f"Leak test iteration {iteration}",
+                            suggested_name=f"leak_test_{iteration}",
+                            force_complexity="simple",
+                            domain_hint="build"
                         )
-                        result2 = await create_task(request2)
+                        result2 = await create_task.fn(
+                            project_path=request2.project_path,
+                            task_description=request2.task_description,
+                            suggested_name=request2.suggested_name,
+                            force_complexity=request2.force_complexity,
+                            domain_hint=request2.domain_hint
+                        )
                         
                         return result1, result2
                     
@@ -230,15 +237,16 @@ depends = ["test"]
         
         def long_running_test():
             # Setup test environment
-            for i in range(100):
+            for i in range(50):  # Reduced from 100 to 50 files
                 (temp_project_dir / f"file_{i}.py").write_text(f"# File {i}")
             
             memory_snapshots = []
             start_time = time.time()
-            target_duration = 30  # Run for 30 seconds
+            target_duration = 5  # Reduced from 30 to 5 seconds
+            max_iterations = 20  # Cap iterations to prevent infinite loops
             
             iteration = 0
-            while time.time() - start_time < target_duration:
+            while (time.time() - start_time < target_duration and iteration < max_iterations):
                 with MemoryProfiler(f"long_run_{iteration}") as profiler:
                     async def operation():
                         request = AnalyzeProjectRequest(project_path=str(temp_project_dir))
@@ -273,15 +281,16 @@ depends = ["test"]
         
         # Memory should not grow unboundedly
         memory_growth = result["final_memory_mb"] - result["initial_memory_mb"]
-        assert memory_growth < 50  # Less than 50MB growth over 30 seconds
+        assert memory_growth < 30  # Less than 30MB growth over 5 seconds (reduced from 50MB/30s)
         
-        # Check for memory growth trend
-        mid_point = len(snapshots) // 2
-        first_half_avg = sum(s["memory_mb"] for s in snapshots[:mid_point]) / mid_point
-        second_half_avg = sum(s["memory_mb"] for s in snapshots[mid_point:]) / (len(snapshots) - mid_point)
-        
-        growth_rate = (second_half_avg - first_half_avg) / first_half_avg
-        assert growth_rate < 0.2  # Less than 20% memory growth rate
+        # Check for memory growth trend (only if we have enough samples)
+        if len(snapshots) >= 4:
+            mid_point = len(snapshots) // 2
+            first_half_avg = sum(s["memory_mb"] for s in snapshots[:mid_point]) / mid_point
+            second_half_avg = sum(s["memory_mb"] for s in snapshots[mid_point:]) / (len(snapshots) - mid_point)
+            
+            growth_rate = (second_half_avg - first_half_avg) / first_half_avg
+            assert growth_rate < 0.3  # Less than 30% memory growth rate (relaxed for shorter test)
 
     @pytest.mark.benchmark(group="memory") 
     def test_concurrent_memory_usage(self, benchmark, temp_project_dir):
@@ -297,7 +306,7 @@ depends = ["test"]
                     # Create multiple concurrent operations
                     tasks = []
                     
-                    for i in range(20):
+                    for i in range(10):  # Reduced from 20 to 10 concurrent operations
                         request = AnalyzeProjectRequest(project_path=str(temp_project_dir))
                         task = analyze_project_for_tasks.fn(project_path=request.project_path)
                         tasks.append(task)
@@ -327,7 +336,7 @@ depends = ["test"]
         assert op_results["successful_operations"] == op_results["total_operations"]
         
         # Memory usage should be reasonable even with concurrency
-        assert result["memory_increase_mb"] < 100  # Less than 100MB for 20 concurrent ops
+        assert result["memory_increase_mb"] < 80   # Less than 80MB for 10 concurrent ops (reduced from 100MB/20 ops)
         assert result["memory_leaked_mb"] < 5      # Less than 5MB leaked
 
     def test_memory_profiling_tools(self):

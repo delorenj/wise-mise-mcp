@@ -58,14 +58,14 @@ class TestTaskLifecycleWorkflows:
             )
             
             if "error" not in create_result:
-                assert create_result["success"] is True
-                new_task_name = create_result["task_name"]
+                assert create_result.get("result", {}).get("success") is True
+                new_task_name = create_result["result"]["task_name"]
                 
                 # Step 3: Verify task was added
                 updated_analysis = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
                 updated_task_count = len(updated_analysis["existing_tasks"])
                 
-                if create_result["type"] == "toml_task":
+                if create_result.get("result", {}).get("type") == "toml_task":
                     # TOML tasks should increase count
                     assert updated_task_count > initial_task_count
                     
@@ -111,7 +111,7 @@ class TestTaskLifecycleWorkflows:
                     final_analysis = await analyze_project_for_tasks.fn(project_path=analyze_request.project_path)
                     final_task_count = len(final_analysis["existing_tasks"])
                     
-                    if create_result["type"] == "toml_task":
+                    if create_result.get("result", {}).get("type") == "toml_task":
                         assert final_task_count <= updated_task_count
                         
                         task_names = [task["name"] for task in final_analysis["existing_tasks"]]

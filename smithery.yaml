@@ -1,0 +1,98 @@
+name: wise-mise-mcp
+description: "Intelligent MCP server that transforms mise task management with AI-powered analysis and domain expertise"
+version: "2.0.0"
+
+# Specify container runtime for Docker-based deployment
+runtime: container
+
+# Build configuration
+build:
+  dockerfile: Dockerfile
+  context: .
+  
+# Start command configuration for HTTP transport
+startCommand:
+  type: http
+  port: 3000
+  path: /mcp
+  healthCheck:
+    path: /health
+    timeout: 10s
+    interval: 30s
+
+# Resource limits
+resources:
+  memory: 512Mi
+  cpu: 250m
+
+# Environment configuration
+environment:
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+# MCP server metadata
+mcp:
+  name: "Wise Mise MCP"
+  description: "Intelligent mise task management with AI-powered analysis"
+  version: "2.0.0"
+  
+  # Supported MCP protocol features
+  capabilities:
+    tools: true
+    resources: false
+    prompts: false
+    
+  # Tool definitions for Smithery marketplace
+  tools:
+    - name: analyze_project_for_tasks
+      description: "Extract strategic tasks from project structure with AI analysis"
+    - name: trace_task_chain
+      description: "Map task dependencies and execution flow"
+    - name: create_task
+      description: "Add new tasks with intelligent domain placement"
+    - name: validate_task_architecture
+      description: "Ensure configuration follows mise best practices"
+    - name: prune_tasks
+      description: "Remove outdated or redundant tasks"
+    - name: get_task_recommendations
+      description: "Get suggestions for mise task optimization"
+    - name: get_mise_architecture_rules
+      description: "Get architectural rules and patterns for mise tasks"
+    - name: mise_task_expert_guidance
+      description: "Get expert guidance on mise task management"
+    - name: task_chain_analyst
+      description: "Analyze and optimize task execution chains"
+
+# Deployment configuration
+deployment:
+  # Auto-scaling configuration
+  scaling:
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPU: 80
+    
+  # Health check configuration
+  probes:
+    liveness:
+      path: /health
+      initialDelay: 30s
+    readiness:
+      path: /health
+      initialDelay: 10s
+
+# Repository and documentation links
+repository: "https://github.com/delorenj/wise-mise-mcp"
+documentation: "https://wise-mise-mcp.readthedocs.io"
+license: "MIT"
+author: "Jarad DeLorenzo"
+
+# Tags for Smithery marketplace discovery
+tags:
+  - mise
+  - task-management
+  - ai
+  - automation
+  - build-tools
+  - developer-tools
+  - project-management
+  - devops

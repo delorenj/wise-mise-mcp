@@ -344,8 +344,10 @@ class TestPruneTasks:
             result = await prune_tasks.fn(project_path=request.project_path, dry_run=request.dry_run)
             
             assert result["dry_run"] is True
-            assert "redundant_tasks" in result
-            assert len(result["redundant_tasks"]) == 1
+            assert "tasks_to_prune" in result
+            assert len(result["tasks_to_prune"]) == 1
+            assert "total_to_prune" in result
+            assert result["total_to_prune"] == 1
             
     @pytest.mark.asyncio
     async def test_prune_tasks_actual_removal(self, temp_project_dir):
@@ -370,8 +372,12 @@ class TestPruneTasks:
                 result = await prune_tasks.fn(project_path=request.project_path, dry_run=request.dry_run)
                 
                 assert result["dry_run"] is False
-                assert "removed_tasks" in result
-                assert "redundant_task" in result["removed_tasks"]
+                assert "pruned_tasks" in result
+                assert "total_pruned" in result
+                assert result["total_pruned"] == 1
+                # Check if the task was pruned
+                task_names = [task["name"] for task in result["pruned_tasks"]]
+                assert "redundant_task" in task_names
                 
     @pytest.mark.asyncio
     async def test_prune_tasks_nonexistent_project(self):
@@ -396,17 +402,35 @@ class TestRemoveTask:
         )
         
         with patch('wise_mise_mcp.server.TaskManager') as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager.remove_task.return_value = {
-                "success": True,
-                "message": "Removed TOML task 'test:old'"
-            }
-            mock_manager_class.return_value = mock_manager
-            
-            result = await remove_task.fn(project_path=request.project_path, task_name=request.task_name)
-            
-            assert result["success"] is True
-            assert "test:old" in result["message"]
+            with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+                # Mock the analyzer to find existing tasks
+                from wise_mise_mcp.models import TaskDefinition, TaskDomain, TaskComplexity
+                
+                mock_task = TaskDefinition(
+                    name="old",
+                    domain=TaskDomain.TEST,
+                    description="Test task to remove",
+                    run="echo 'test'",
+                    complexity=TaskComplexity.SIMPLE
+                )
+                
+                mock_analyzer = Mock()
+                mock_analyzer.extract_existing_tasks.return_value = [mock_task]
+                mock_analyzer.build_dependency_graph.return_value = {}
+                mock_analyzer.find_dependent_tasks.return_value = []
+                mock_analyzer_class.return_value = mock_analyzer
+                
+                # Mock the manager
+                mock_manager = Mock()
+                mock_manager.remove_task.return_value = {"success": True}
+                mock_manager_class.return_value = mock_manager
+                
+                result = await remove_task.fn(project_path=request.project_path, task_name=request.task_name)
+                
+                assert "error" not in result
+                assert "removed_task" in result
+                assert result["removed_task"]["name"] == "test:old"
+                assert "dependent_tasks_affected" in result
             
     @pytest.mark.asyncio
     async def test_remove_nonexistent_task(self, temp_project_dir):
@@ -448,32 +472,34 @@ class TestGetTaskRecommendations:
     @pytest.mark.asyncio
     async def test_get_recommendations(self, temp_project_dir):
         """Test getting task recommendations"""
-        request = AnalyzeProjectRequest(project_path=str(temp_project_dir))
-        
         result = await get_task_recommendations.fn()
         
         assert "error" not in result
-        assert "project_path" in result
-        assert "new_task_recommendations" in result
-        assert "architecture_improvements" in result
-        assert "redundancy_analysis" in result
-        assert "summary" in result
+        assert "best_practices" in result
+        assert "common_patterns" in result
+        assert "domain_guidelines" in result
         
-        # Verify summary statistics
-        summary = result["summary"]
-        assert "total_existing_tasks" in summary
-        assert "domains_in_use" in summary
-        assert "high_priority_recommendations" in summary
+        # Verify best practices structure
+        best_practices = result["best_practices"]
+        assert "naming" in best_practices
+        assert "organization" in best_practices
+        assert "dependencies" in best_practices
+        assert "performance" in best_practices
+        
+        # Verify each section has recommendations
+        assert len(best_practices["naming"]) > 0
+        assert len(best_practices["organization"]) > 0
         
     @pytest.mark.asyncio
     async def test_get_recommendations_nonexistent_project(self):
-        """Test getting recommendations for non-existent project"""
-        request = AnalyzeProjectRequest(project_path="/nonexistent/path")
-        
+        """Test getting general recommendations (no project-specific data)"""
+        # get_task_recommendations doesn't require a project path - it returns general guidance
         result = await get_task_recommendations.fn()
         
-        assert "error" in result
-        assert "does not exist" in result["error"]
+        # Should always succeed as it provides general recommendations
+        assert "error" not in result
+        assert "best_practices" in result
+        assert "domain_guidelines" in result
 
 
 class TestGetMiseArchitectureRules:
@@ -484,34 +510,24 @@ class TestGetMiseArchitectureRules:
         """Test getting mise architecture rules"""
         result = await get_mise_architecture_rules.fn()
         
-        assert "domains" in result
-        assert "naming_conventions" in result
-        assert "file_structure" in result
-        assert "task_types" in result
-        assert "dependencies" in result
-        assert "performance" in result
+        assert "error" not in result
+        assert "architecture_principles" in result
+        assert "domain_hierarchy" in result
+        assert "complexity_levels" in result
+        assert "dependency_patterns" in result
         
-        # Verify domain information
-        domains = result["domains"]
-        assert "core_domains" in domains
-        assert "descriptions" in domains
+        # Verify domain hierarchy has expected domains
+        domain_hierarchy = result["domain_hierarchy"]
+        assert "build" in domain_hierarchy
+        assert "test" in domain_hierarchy
+        assert "lint" in domain_hierarchy
+        assert "deploy" in domain_hierarchy
         
-        # Verify all expected domains are present
-        expected_domains = {
-            "build", "test", "lint", "dev", "deploy", 
-            "db", "ci", "docs", "clean", "setup"
-        }
-        assert set(domains["core_domains"]) == expected_domains
-        
-        # Verify naming conventions
-        naming = result["naming_conventions"]
-        assert "hierarchical_structure" in naming
-        assert ":" in naming["hierarchical_structure"]
-        
-        # Verify file structure
-        file_struct = result["file_structure"]
-        assert ".mise.toml" in file_struct["root_config"]
-        assert ".mise/" in file_struct["task_directory"]
+        # Verify complexity levels
+        complexity_levels = result["complexity_levels"]
+        assert "simple" in complexity_levels
+        assert "moderate" in complexity_levels
+        assert "complex" in complexity_levels
 
 
 class TestPromptFunctions:
@@ -522,31 +538,44 @@ class TestPromptFunctions:
         """Test mise task expert guidance prompt"""
         result = await mise_task_expert_guidance.fn()
         
-        assert isinstance(result, str)
-        assert len(result) > 100  # Should be substantial guidance
-        assert "mise task" in result.lower()
-        assert "domain" in result.lower()
-        assert "architecture" in result.lower()
+        assert isinstance(result, dict)
+        assert "error" not in result
+        assert "expert_tips" in result
+        assert "common_issues" in result
+        assert "migration_strategies" in result
         
-        # Should contain key concepts
-        assert "10 domains" in result or "domains" in result
-        assert "hierarchical" in result.lower()
-        assert ".mise.toml" in result
+        # Verify expert tips structure
+        expert_tips = result["expert_tips"]
+        assert "debugging_tasks" in expert_tips
+        assert "performance_optimization" in expert_tips
+        assert "advanced_patterns" in expert_tips
+        
+        # Verify guidance has substance
+        assert len(expert_tips["debugging_tasks"]) > 0
+        assert len(expert_tips["performance_optimization"]) > 0
         
     @pytest.mark.asyncio
     async def test_task_chain_analyst(self):
         """Test task chain analyst prompt"""
         result = await task_chain_analyst.fn()
         
-        assert isinstance(result, str)
-        assert len(result) > 100  # Should be substantial guidance
-        assert "task chain" in result.lower()
-        assert "dependency" in result.lower()
-        assert "execution" in result.lower()
+        assert isinstance(result, dict)
+        assert "error" not in result
+        assert "analysis_techniques" in result
+        assert "optimization_strategies" in result
+        assert "performance_metrics" in result
+        assert "visualization_tips" in result
         
-        # Should contain analysis concepts
-        assert "parallel" in result.lower()
-        assert "topological" in result.lower() or "execution order" in result.lower()
+        # Verify analysis techniques structure
+        techniques = result["analysis_techniques"]
+        assert "bottleneck_detection" in techniques
+        assert "critical_path" in techniques
+        assert "parallelization" in techniques
+        
+        # Verify optimization strategies
+        strategies = result["optimization_strategies"]
+        assert "parallel_execution" in strategies
+        assert "caching_optimization" in strategies
 
 
 class TestServerIntegration:

@@ -239,11 +239,15 @@ depends = ["test"]
             (temp_project_dir / ".mise.toml").write_text(mise_config)
             return temp_project_dir
         
-        async def validate_architecture():
+        def run_validation():
             request = setup_validation_request()
-            return await validate_task_architecture(request)
+            
+            async def validate():
+                return await validate_task_architecture.fn(project_path=str(request))
+            
+            return asyncio.run(validate())
         
-        result = benchmark(asyncio.run, validate_architecture())
+        result = benchmark(run_validation)
         assert "error" not in result
 
     @pytest.mark.benchmark(group="stress_test")
@@ -287,7 +291,7 @@ depends = ["test"]
                     "error_rate": (len(operations) - successful) / len(operations)
                 }
         
-        result = benchmark(asyncio.run, sustained_operations())
+        result = benchmark(lambda: asyncio.run(sustained_operations()))
         
         # At least 80% of operations should succeed under load
         assert result["error_rate"] < 0.2
@@ -314,13 +318,13 @@ class TestPerformanceRegression:
             request = AnalyzeProjectRequest(project_path=str(temp_project_dir))
             return await analyze_project_for_tasks.fn(project_path=request.project_path)
         
-        result = benchmark(asyncio.run, baseline_analysis())
+        result = benchmark(lambda: asyncio.run(baseline_analysis()))
         assert "error" not in result
         
         # Store baseline metrics for comparison
         benchmark.extra_info = {
-            "file_count": result["project_structure"]["file_count"],
-            "task_count": len(result.get("suggested_tasks", []))
+            "package_managers": len(result["project_structure"].get("package_managers", [])),
+            "task_count": len(result.get("recommended_tasks", []))
         }
 
     def test_performance_thresholds(self):

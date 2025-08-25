@@ -11,7 +11,12 @@ run = "uv sync"
 [tasks.test]
 description = "Run tests"
 run = "python -m pytest"
-sources = ["mise_task_tools/**/*.py", "tests/**/*.py"]
+sources = ["wise_mise_mcp/**/*.py", "tests/**/*.py"]
+
+[tasks."test:fast"]
+description = "Run fast tests (excludes slow memory benchmarks)"
+run = "python -m pytest -c pytest-fast.ini"
+sources = ["wise_mise_mcp/**/*.py", "tests/**/*.py"]
 
 [tasks.lint]
 description = "Run linting"

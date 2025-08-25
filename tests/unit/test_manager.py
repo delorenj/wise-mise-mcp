@@ -434,18 +434,25 @@ class TestTaskManager:
             with patch('builtins.open', mock_open()) as mock_file:
                 manager._update_task_documentation()
             
-            # Verify documentation was created
+            # Verify that the documentation directory exists
             docs_dir = manager.mise_dir / "docs"
             assert docs_dir.exists()
             
-            readme_path = docs_dir / "tasks.md"
-            assert readme_path.exists()
+            # Verify the file was opened for writing
+            mock_file.assert_called_once()
+            call_args = mock_file.call_args
+            opened_path = str(call_args[0][0])  # First positional argument is the path
+            assert "tasks.md" in opened_path
+            assert call_args[0][1] == 'w'  # Second argument should be 'w' for write mode
             
-            content = readme_path.read_text()
-            assert "Build the project" in content
-            assert "Run unit tests" in content
-            assert "mise run build" in content
-            assert "mise run test:unit" in content
+            # Verify the content that was written to the file
+            handle = mock_file.return_value.__enter__.return_value
+            written_content = ''.join(call.args[0] for call in handle.write.call_args_list)
+            
+            assert "Build the project" in written_content
+            assert "Run unit tests" in written_content
+            assert "mise run build" in written_content
+            assert "mise run test:unit" in written_content
 
 
 class TestTaskManagerErrorHandling:

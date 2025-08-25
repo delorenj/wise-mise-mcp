@@ -75,6 +75,20 @@ async def analyze_project_for_tasks(
     """
     try:
         project_path_obj = Path(project_path)
+        
+        # Security validation: reject potentially dangerous paths
+        dangerous_paths = ['/etc', '/proc', '/sys', '/dev', '/bin', '/sbin', '/usr/bin', '/usr/sbin']
+        resolved_path = project_path_obj.resolve()
+        
+        # Check if path is in dangerous system directories
+        for dangerous in dangerous_paths:
+            if str(resolved_path).startswith(dangerous):
+                return {"error": f"Access denied: {project_path} is not allowed for security reasons"}
+        
+        # Check for path traversal attempts
+        if '..' in str(project_path_obj) or str(resolved_path) != str(project_path_obj.absolute()):
+            return {"error": f"Access denied: Path traversal detected in {project_path}"}
+        
         if not project_path_obj.exists():
             return {"error": f"Project path {project_path} does not exist"}
 
@@ -167,25 +181,25 @@ async def trace_task_chain(
         # Transform to expected format
         return {
             "project_path": str(project_path_obj),
-            "task_name": result["task_name"],  # Keep original field name for compatibility
-            "target_task": result["task_name"],
-            "execution_order": result["execution_order"],  # Keep original field for compatibility
+            "task_name": result.get("task_name", task_name),  # Keep original field name for compatibility
+            "target_task": result.get("task_name", task_name),
+            "execution_order": result.get("execution_order", []),  # Keep original field for compatibility
             "execution_chain": [
                 {
                     "name": task_name,
-                    "domain": details["domain"],
-                    "description": details["description"],
-                    "command": details["run"],
-                    "complexity": details["complexity"],
+                    "domain": details.get("domain", "unknown"),
+                    "description": details.get("description", ""),
+                    "command": details.get("run", ""),
+                    "complexity": details.get("complexity", "simple"),
                 }
-                for task_name, details in result["task_details"].items()
-                if task_name in result["execution_order"]
+                for task_name, details in result.get("task_details", {}).items()
+                if task_name in result.get("execution_order", [])
             ],
-            "parallelizable_groups": result["parallelizable_groups"],  # Keep original for compatibility
-            "dependencies": result["dependencies"],
-            "dependents": result["dependents"],
-            "task_details": result["task_details"],
-            "total_steps": len(result["execution_order"]),
+            "parallelizable_groups": result.get("parallelizable_groups", []),  # Keep original for compatibility
+            "dependencies": result.get("dependencies", []),
+            "dependents": result.get("dependents", []),
+            "task_details": result.get("task_details", {}),
+            "total_steps": len(result.get("execution_order", [])),
             "estimated_complexity": "simple",  # Simple default
         }
 
@@ -665,7 +679,45 @@ async def task_chain_analyst() -> Dict[str, Any]:
 
 def main():
     """Main entry point for the MCP server."""
-    app.run()
+    import sys
+    import os
+    
+    # For Docker/HTTP deployment, check if we should use HTTP transport
+    if ('--transport' in sys.argv and 'http' in sys.argv) or '--http' in sys.argv or os.getenv('MCP_TRANSPORT') == 'http':
+        # Run with HTTP transport for Docker/web deployment
+        port = 3000
+        host = "0.0.0.0"
+        
+        # Parse port from command line args
+        try:
+            if '--port' in sys.argv:
+                port_idx = sys.argv.index('--port') + 1
+                port = int(sys.argv[port_idx])
+        except (ValueError, IndexError):
+            port = 3000
+            
+        # Parse host from command line args
+        try:
+            if '--host' in sys.argv:
+                host_idx = sys.argv.index('--host') + 1
+                host = sys.argv[host_idx]
+        except IndexError:
+            host = "0.0.0.0"
+            
+        print(f"Starting HTTP MCP server on {host}:{port}")
+        
+        # Add health check endpoint for Docker - access underlying FastAPI app
+        try:
+            @app.app.get("/health")
+            async def health_check():
+                return {"status": "healthy", "service": "wise-mise-mcp"}
+        except Exception as e:
+            print(f"Could not add health endpoint: {e}")
+            
+        app.run(transport="http", host=host, port=port, path="/mcp")
+    else:
+        # Default to stdio transport
+        app.run()
 
 
 if __name__ == "__main__":

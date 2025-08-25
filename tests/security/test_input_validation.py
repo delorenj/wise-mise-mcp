@@ -69,11 +69,12 @@ class TestInputValidation:
         ]
         
         with tempfile.TemporaryDirectory() as temp_dir:
-            for malicious_command in malicious_commands:
-                # Fix: include required task_description field
+            for i, malicious_command in enumerate(malicious_commands):
+                # Fix: include required task_description field and make names unique
                 params = {
                     "project_path": temp_dir,
-                    "task_description": f"Testing command injection with: {malicious_command[:50]}..."
+                    "task_description": f"Testing command injection with: {malicious_command[:50]}...",
+                    "suggested_name": f"security_test_command_{i}_{hash(malicious_command) % 10000}"
                 }
                 
                 result = await create_task.fn(
@@ -87,7 +88,7 @@ class TestInputValidation:
                 if "error" not in result:
                     # If task creation succeeds, verify the command is stored as-is
                     # without being interpreted or executed
-                    assert result.get("task_created") is True or "success" in result
+                    assert result.get("result", {}).get("success") is True
                     # The malicious command should be stored but not executed
 
     @pytest.mark.security

@@ -94,9 +94,9 @@ class TestMCPServerIntegration:
                 suggested_name=create_request.suggested_name
             )
             
-            if "error" not in create_result:
+            if "error" not in create_result and create_result.get("result", {}).get("success"):
                 # Task was created successfully, try to trace it
-                task_name = create_result["task_name"]
+                task_name = create_result["result"]["task_name"]
                 
                 trace_request = TraceTaskChainRequest(
                     project_path=str(project_path),
