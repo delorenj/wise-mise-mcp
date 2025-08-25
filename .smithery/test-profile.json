@@ -1,0 +1,14 @@
+{
+  "transport": "streamable-http",
+  "url": "http://localhost:3000/mcp",
+  "timeout": 30000,
+  "headers": {
+    "Accept": "text/event-stream",
+    "Connection": "keep-alive",
+    "Content-Type": "application/json"
+  },
+  "config": {
+    "retries": 3,
+    "retryDelay": 1000
+  }
+}

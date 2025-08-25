@@ -16,9 +16,18 @@ startCommand:
   port: 3000
   path: /mcp
   healthCheck:
-    path: /health
+    path: /mcp
     timeout: 10s
     interval: 30s
+    
+# MCP client configuration for scanning
+test:
+  transport: streamable-http
+  url: "http://localhost:3000/mcp"
+  timeout: 30s
+  headers:
+    Accept: "text/event-stream"
+    Connection: "keep-alive"
 
 # Resource limits
 resources:
@@ -74,10 +83,10 @@ deployment:
   # Health check configuration
   probes:
     liveness:
-      path: /health
+      path: /mcp
       initialDelay: 30s
     readiness:
-      path: /health
+      path: /mcp
       initialDelay: 10s
 
 # Repository and documentation links
