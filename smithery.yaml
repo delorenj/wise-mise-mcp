@@ -20,14 +20,14 @@ startCommand:
     timeout: 10s
     interval: 30s
     
-# MCP client configuration for scanning
-test:
+# Test configuration for MCP scanning
+testConfig:
   transport: streamable-http
-  url: "http://localhost:3000/mcp"
-  timeout: 30s
+  url: http://localhost:3000/mcp
+  timeout: 30000
   headers:
-    Accept: "text/event-stream"
-    Connection: "keep-alive"
+    Accept: text/event-stream
+    Connection: keep-alive
 
 # Resource limits
 resources:
@@ -50,6 +50,15 @@ mcp:
     tools: true
     resources: false
     prompts: false
+  
+  # Client configuration for tool scanning  
+  client:
+    transport: "streamable-http"
+    endpoint: "http://localhost:3000/mcp"
+    timeout: 30000
+    headers:
+      Accept: "text/event-stream"
+      Connection: "keep-alive"
     
   # Tool definitions for Smithery marketplace
   tools:
