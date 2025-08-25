@@ -9,6 +9,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     git \
     build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files first for better Docker layer caching

@@ -4,3 +4,34 @@ build:
   dockerBuildPath: "."
 startCommand:
   type: "http"
+  configSchema:
+    type: object
+    properties:
+      timeout:
+        type: number
+        default: 30000
+        description: "Request timeout in milliseconds"
+      port:
+        type: number
+        default: 3000
+        description: "Server port"
+    required: []
+  testConfiguration:
+    enabled: true
+    timeout: 60000
+    healthCheck:
+      path: "/mcp"
+      expectedStatus: 200
+    tests:
+      - name: "Server Health"
+        type: "http"
+        path: "/mcp"
+        method: "GET"
+      - name: "MCP Protocol"
+        type: "mcp"
+        requests:
+          - method: "initialize"
+            params:
+              protocolVersion: "2024-11-05"
+              capabilities: {}
+          - method: "tools/list"
