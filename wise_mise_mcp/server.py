@@ -680,8 +680,6 @@ async def task_chain_analyst() -> dict[str, Any]:
 
 def main():
     """Main entry point for the MCP server."""
-    import sys
-    import os
 
     # For Docker/HTTP deployment, check if we should use HTTP transport
     if ('--transport' in sys.argv and 'http' in sys.argv) or '--http' in sys.argv or os.getenv('MCP_TRANSPORT') == 'http':
