@@ -5,8 +5,10 @@ Unit tests for wise_mise_mcp.server module
 import pytest
 import tempfile
 import json
+import os
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
+from importlib.metadata import PackageNotFoundError
 
 from wise_mise_mcp.server import (
     AnalyzeProjectRequest,
@@ -24,9 +26,10 @@ from wise_mise_mcp.server import (
     get_task_recommendations,
     get_mise_architecture_rules,
     mise_task_expert_guidance,
-    task_chain_analyst
+    task_chain_analyst,
+    main
 )
-from wise_mise_mcp.models import TaskComplexity
+from wise_mise_mcp.models import TaskComplexity, TaskDomain
 
 
 class TestRequestModels:
@@ -630,4 +633,297 @@ class TestServerIntegration:
             # All should return error dict instead of raising exception
             assert isinstance(result, dict)
             assert "error" in result
+
+
+class TestSecurityAndErrorCoverage:
+    """Test security validation and error handling edge cases for coverage"""
+
+    @pytest.mark.asyncio
+    async def test_analyze_project_dangerous_paths(self):
+        """Test security validation for dangerous system paths (line 86)"""
+        dangerous_paths = ['/etc/passwd', '/proc/version', '/sys/kernel', '/dev/null', '/bin/sh']
+        
+        for dangerous_path in dangerous_paths:
+            result = await analyze_project_for_tasks.fn(project_path=dangerous_path)
+            assert "error" in result
+            assert "Access denied" in result["error"]
+            assert "not allowed for security reasons" in result["error"]
+
+    @pytest.mark.asyncio 
+    async def test_analyze_project_path_traversal(self):
+        """Test path traversal detection (line 90)"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Test path traversal attempts
+            traversal_paths = [
+                f"{temp_dir}/../../../etc/passwd",
+                f"{temp_dir}/./../../etc", 
+                f"{temp_dir}/../sensitive"
+            ]
+            
+            for traversal_path in traversal_paths:
+                result = await analyze_project_for_tasks.fn(project_path=traversal_path)
+                assert "error" in result
+                assert "Access denied" in result["error"]
+                assert "Path traversal detected" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_trace_task_chain_exception_handling(self):
+        """Test exception handling in trace_task_chain (lines 206-207)"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+                # Make analyzer raise an exception during trace_dependencies
+                mock_analyzer = Mock()
+                mock_analyzer.trace_dependencies.side_effect = Exception("Trace failed")
+                mock_analyzer_class.return_value = mock_analyzer
+                
+                result = await trace_task_chain.fn(project_path=temp_dir, task_name="build")
+                
+                assert "error" in result
+                assert "Trace failed" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_create_task_invalid_domain_hint(self):
+        """Test invalid domain_hint validation (lines 250-253)"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = await create_task.fn(
+                project_path=temp_dir,
+                task_description="Test task",
+                domain_hint="invalid_domain"
+            )
+            
+            assert "error" in result
+            assert "Invalid domain 'invalid_domain'" in result["error"]
+            assert "Must be one of:" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_create_task_exception_handling(self):
+        """Test exception handling in create_task (lines 270-271)"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch('wise_mise_mcp.server.TaskManager') as mock_manager_class:
+                # Make manager raise an exception during task creation
+                mock_manager = Mock()
+                mock_manager.create_task_intelligently.side_effect = Exception("Creation failed")
+                mock_manager_class.return_value = mock_manager
+                
+                result = await create_task.fn(
+                    project_path=temp_dir,
+                    task_description="Test task"
+                )
+                
+                assert "error" in result
+                assert "Task creation failed: Creation failed" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_validate_architecture_no_tasks(self):
+        """Test validate_task_architecture with no tasks (line 294)"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+                mock_analyzer = Mock()
+                mock_analyzer.extract_existing_tasks.return_value = []  # No tasks
+                mock_analyzer_class.return_value = mock_analyzer
+                
+                result = await validate_task_architecture.fn(project_path=temp_dir)
+                
+                assert "validation_result" in result
+                assert result["validation_result"] == "no_tasks"
+                assert "No tasks found to validate" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_validate_architecture_exception_handling(self):
+        """Test exception handling in validate_task_architecture (lines 309-310)"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+                mock_analyzer = Mock()
+                mock_analyzer.extract_existing_tasks.side_effect = Exception("Validation failed")
+                mock_analyzer_class.return_value = mock_analyzer
+                
+                result = await validate_task_architecture.fn(project_path=temp_dir)
+                
+                assert "error" in result
+                assert "Validation failed: Validation failed" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_prune_tasks_actual_removal_flow(self):
+        """Test actual task removal in prune_tasks (lines 353-355)"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+                with patch('wise_mise_mcp.server.TaskManager') as mock_manager_class:
+                    mock_analyzer = Mock()
+                    mock_analyzer.find_redundant_tasks.return_value = [
+                        {"task": "redundant1", "reason": "Unused"},
+                        {"task": "redundant2", "reason": "Duplicate"}
+                    ]
+                    mock_analyzer_class.return_value = mock_analyzer
+                    
+                    mock_manager = Mock()
+                    # First task removal succeeds, second fails
+                    mock_manager.remove_task.side_effect = [
+                        {"success": True}, 
+                        {"success": False}
+                    ]
+                    mock_manager_class.return_value = mock_manager
+                    
+                    result = await prune_tasks.fn(project_path=temp_dir, dry_run=False)
+                    
+                    assert result["dry_run"] is False
+                    assert "pruned_tasks" in result
+                    # Only one task should be in pruned list (the successful one)
+                    assert result["total_pruned"] == 1
+
+    @pytest.mark.asyncio
+    async def test_prune_tasks_exception_handling(self):
+        """Test exception handling in prune_tasks (lines 372-373)"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+                mock_analyzer = Mock()
+                mock_analyzer.find_redundant_tasks.side_effect = Exception("Pruning failed")
+                mock_analyzer_class.return_value = mock_analyzer
+                
+                result = await prune_tasks.fn(project_path=temp_dir, dry_run=True)
+                
+                assert "error" in result
+                assert "Pruning failed: Pruning failed" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_remove_task_exception_handling(self):
+        """Test exception handling in remove_task (lines 435-436)"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch('wise_mise_mcp.server.TaskManager') as mock_manager_class:
+                mock_manager = Mock()
+                mock_manager.remove_task.side_effect = Exception("Removal failed")
+                mock_manager_class.return_value = mock_manager
+                
+                result = await remove_task.fn(project_path=temp_dir, task_name="test")
+                
+                assert "error" in result
+                assert "Task removal failed: Removal failed" in result["error"]
+
+
+class TestVersionHandling:
+    """Test version detection and package not found scenarios"""
+
+    def test_package_not_found_fallback(self):
+        """Test PackageNotFoundError fallback (lines 20-21)"""
+        with patch('wise_mise_mcp.server.version', side_effect=PackageNotFoundError()):
+            # Re-import the module to trigger the version detection
+            import importlib
+            import wise_mise_mcp.server
+            
+            # Force reimport to trigger version detection
+            importlib.reload(wise_mise_mcp.server)
+            
+            # The __version__ should fall back to "dev"
+            assert wise_mise_mcp.server.__version__ == "dev"
+
+
+class TestMainFunction:
+    """Test main() function with different transport modes (lines 682-720)"""
+
+    def test_main_http_transport_with_args(self):
+        """Test main() with HTTP transport and custom args"""
+        test_args = ['script_name', '--transport', 'http', '--port', '8080', '--host', '127.0.0.1']
+        
+        with patch('sys.argv', test_args):
+            with patch('wise_mise_mcp.server.app') as mock_app:
+                with patch('builtins.print') as mock_print:
+                    main()
+                    
+                    # Should call app.run with HTTP transport
+                    mock_app.run.assert_called_once_with(
+                        transport="http", 
+                        host="127.0.0.1", 
+                        port=8080, 
+                        path="/mcp"
+                    )
+                    # Should print startup message
+                    mock_print.assert_any_call("Starting HTTP MCP server on 127.0.0.1:8080")
+
+    def test_main_http_transport_default_values(self):
+        """Test main() with HTTP transport using default values"""
+        test_args = ['script_name', '--http']
+        
+        with patch('sys.argv', test_args):
+            with patch('wise_mise_mcp.server.app') as mock_app:
+                main()
+                
+                # Should use default port and host
+                mock_app.run.assert_called_once_with(
+                    transport="http", 
+                    host="0.0.0.0", 
+                    port=3000, 
+                    path="/mcp"
+                )
+
+    def test_main_http_transport_env_var(self):
+        """Test main() with HTTP transport via environment variable"""
+        with patch('os.getenv', return_value='http'):
+            with patch('sys.argv', ['script_name']):
+                with patch('wise_mise_mcp.server.app') as mock_app:
+                    main()
+                    
+                    # Should use HTTP transport based on env var
+                    mock_app.run.assert_called_once_with(
+                        transport="http", 
+                        host="0.0.0.0", 
+                        port=3000, 
+                        path="/mcp"
+                    )
+
+    def test_main_http_invalid_port_fallback(self):
+        """Test main() with invalid port argument fallback (lines 696-697)"""
+        test_args = ['script_name', '--http', '--port', 'invalid']
+        
+        with patch('sys.argv', test_args):
+            with patch('wise_mise_mcp.server.app') as mock_app:
+                main()
+                
+                # Should fallback to default port 3000
+                mock_app.run.assert_called_once_with(
+                    transport="http", 
+                    host="0.0.0.0", 
+                    port=3000, 
+                    path="/mcp"
+                )
+
+    def test_main_http_missing_host_fallback(self):
+        """Test main() with missing host argument fallback (lines 704-705)"""
+        test_args = ['script_name', '--http', '--host']  # Missing host value
+        
+        with patch('sys.argv', test_args):
+            with patch('wise_mise_mcp.server.app') as mock_app:
+                main()
+                
+                # Should fallback to default host "0.0.0.0"
+                mock_app.run.assert_called_once_with(
+                    transport="http", 
+                    host="0.0.0.0", 
+                    port=3000, 
+                    path="/mcp"
+                )
+
+    def test_main_health_endpoint_exception(self):
+        """Test main() health endpoint exception handling (lines 714-715)"""
+        test_args = ['script_name', '--http']
+        
+        with patch('sys.argv', test_args):
+            with patch('wise_mise_mcp.server.app') as mock_app:
+                # Simulate exception when adding health endpoint
+                mock_app.app.get.side_effect = Exception("Health endpoint failed")
+                with patch('builtins.print') as mock_print:
+                    main()
+                    
+                    # Should print error message about health endpoint
+                    mock_print.assert_any_call("Could not add health endpoint: Health endpoint failed")
+
+    def test_main_stdio_transport_default(self):
+        """Test main() with default stdio transport (line 720)"""
+        test_args = ['script_name']
+        
+        with patch('sys.argv', test_args):
+            with patch('os.getenv', return_value=None):  # No HTTP env var
+                with patch('wise_mise_mcp.server.app') as mock_app:
+                    main()
+                    
+                    # Should use stdio transport
+                    mock_app.run.assert_called_once_with()
             assert "does not exist" in result["error"]
