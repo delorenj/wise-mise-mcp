@@ -1,18 +1,18 @@
-# 🚀 Getting Started with Wise Mise MCP
+# 🚀 Getting Started with Wise Mise
 
 > **Transform your development workflow in under 5 minutes**
 
-Welcome to Wise Mise MCP! This guide will get you up and running with intelligent mise task management, from installation to advanced usage patterns. Whether you're new to mise or a power user looking to optimize your workflows, this guide has you covered.
+Welcome to Wise Mise! This guide will get you up and running with intelligent mise task management, from installation to advanced usage patterns. Whether you're new to mise or a power user looking to optimize your workflows, this guide has you covered.
 
 ---
 
 ## 🎯 **What You'll Learn**
 
-- **Quick Setup**: Install and configure Wise Mise MCP in your environment
-- **First Analysis**: Understand what your project needs for optimal task management
-- **Task Creation**: Create intelligent tasks that follow best practices
-- **Workflow Integration**: Seamlessly integrate with your existing development process
-- **Advanced Patterns**: Leverage expert features for complex projects
+- **Quick Setup**: Install Wise Mise and run your first analysis.
+- **CLI Usage**: Master the `analyze` command for instant insights.
+- **MCP Server**: Learn how to run Wise Mise as an MCP server for your favorite client.
+- **Task Creation**: Create intelligent tasks that follow best practices.
+- **Workflow Integration**: Seamlessly integrate with your existing development process.
 
 ---
 
@@ -47,32 +47,29 @@ python --version
 ### Method 1: UV (Recommended)
 
 ```bash
-# Install Wise Mise MCP with UV
-uv add wise-mise-mcp
-
-# Or install globally
-uv tool install wise-mise-mcp
+# Install Wise Mise globally
+uv tool install wise-mise
 
 # Verify installation
-uv run python -m wise_mise_mcp --version
+wise-mise --version
 ```
 
 ### Method 2: Traditional pip
 
 ```bash
 # Install with pip
-pip install wise-mise-mcp
+pip install wise-mise
 
 # Verify installation  
-python -m wise_mise_mcp --version
+wise-mise --version
 ```
 
 ### Method 3: Development Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/delorenj/wise-mise-mcp
-cd wise-mise-mcp
+git clone https://github.com/delorenj/wise-mise
+cd wise-mise
 
 # Install with UV (recommended)
 uv sync
@@ -86,11 +83,13 @@ uv run pytest --tb=short
 
 ---
 
-## 🔧 **MCP Client Configuration**
+## 🔧 **MCP Server Configuration**
+
+To use Wise Mise as an MCP server, you'll need to configure your client.
 
 ### Claude Desktop Setup
 
-Add Wise Mise MCP to your Claude Desktop configuration:
+Add Wise Mise to your Claude Desktop configuration:
 
 **Location**: 
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -101,22 +100,9 @@ Add Wise Mise MCP to your Claude Desktop configuration:
 ```json
 {
   "mcpServers": {
-    "wise-mise-mcp": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "wise_mise_mcp"],
-      "cwd": "/path/to/your/project"
-    }
-  }
-}
-```
-
-**Alternative Configuration** (without UV):
-```json
-{
-  "mcpServers": {
-    "wise-mise-mcp": {
-      "command": "python",
-      "args": ["-m", "wise_mise_mcp"],
+    "wise-mise": {
+      "command": "wise-mise",
+      "args": ["server"],
       "cwd": "/path/to/your/project"
     }
   }
@@ -134,12 +120,21 @@ For other MCP-compatible clients, use similar configuration patterns. The key is
 
 ## 🧪 **Health Check**
 
-Let's verify everything is working correctly:
+Let's verify everything is working correctly.
+
+### CLI Health Check
+The easiest way to check the health of your installation and environment is to use the (planned) `doctor` command:
+```bash
+wise-mise doctor
+```
+
+### MCP Server Health Check
+If you are running the MCP server, you can check its health from your client:
 
 **In your MCP client (like Claude Desktop):**
 
 ```
-Check the health of the Wise Mise MCP server
+Check the health of the Wise Mise server
 ```
 
 You should see a comprehensive health report showing:
@@ -154,11 +149,11 @@ If you see any issues, check the [Troubleshooting](#troubleshooting) section bel
 
 ## 🎯 **Your First Project Analysis**
 
-Now for the exciting part! Let's analyze your first project.
+Now for the exciting part! Let's analyze your first project using the CLI.
 
 ### Step 1: Navigate to Your Project
 
-Open your MCP client and navigate to a project directory. Any project will work, but these types show the best results:
+Open your terminal and navigate to a project directory. Any project will work, but these types show the best results:
 
 - **Node.js/TypeScript** projects (React, Next.js, etc.)
 - **Python** projects (FastAPI, Django, etc.)
@@ -167,17 +162,16 @@ Open your MCP client and navigate to a project directory. Any project will work,
 
 ### Step 2: Analyze Project Structure
 
-**In your MCP client:**
-
-```
-Analyze my current project for intelligent task recommendations
+Run the `analyze` command:
+```bash
+wise-mise analyze .
 ```
 
 The system will automatically:
 1. **Detect your technology stack** (languages, frameworks, tools)
 2. **Analyze existing tasks** (if any)
 3. **Recommend optimized tasks** based on best practices
-4. **Prioritize recommendations** by impact and effort
+4. **Output a JSON with the analysis** that you can inspect or pipe to other tools.
 
 ### Example Output
 
@@ -221,9 +215,11 @@ Each recommendation includes:
 
 ## 🛠️ **Creating Your First Tasks**
 
-Now let's create some tasks! Wise Mise MCP makes this incredibly easy.
+While the CLI provides analysis, task creation is currently handled by the MCP server.
 
-### Method 1: High-Priority Batch Creation
+### Using the MCP Server to Create Tasks
+
+Once you have the server running and connected to your client, you can create tasks using natural language.
 
 **In your MCP client:**
 
@@ -237,53 +233,17 @@ This will automatically:
 3. Configure source/output tracking for performance
 4. Generate appropriate descriptions and documentation
 
-### Method 2: Individual Task Creation
-
 **Create a specific task:**
 
 ```
 Create a task to run TypeScript type checking in watch mode for development
 ```
 
-**Example response:**
-```
-✅ Created Task: lint:types:watch
-
-📍 Placement: .mise.toml (simple task)
-🔧 Configuration:
-  [tasks.lint.types.watch]
-  description = "TypeScript type checking in watch mode for development"
-  run = "tsc --noEmit --watch"
-  sources = ["src/**/*.ts", "src/**/*.tsx", "tsconfig.json"]
-
-💡 Reasoning: TypeScript watch mode provides continuous type checking 
-during development, catching type errors early without manual intervention.
-
-🔗 Integration: This task complements the existing build:dev task and can 
-run in parallel for enhanced development experience.
-```
-
-### Method 3: Natural Language Task Creation
-
-Describe what you want in plain English:
-
-```
-I need a task that builds my React components library, runs tests, 
-and creates a distribution bundle ready for NPM publishing
-```
-
-The system will:
-1. **Analyze the complexity** (this requires multiple steps)
-2. **Choose appropriate domain** (likely `build:lib` or `publish:prepare`)
-3. **Create a file-based task** (for complex multi-step operations)
-4. **Set up dependencies** (test must pass before building)
-5. **Configure outputs** (dist folder, package files)
-
 ---
 
 ## 📊 **Understanding Task Architecture**
 
-Wise Mise MCP organizes tasks using a hierarchical domain system:
+Wise Mise organizes tasks using a hierarchical domain system:
 
 ### Core Domains
 
@@ -483,11 +443,11 @@ What new tasks should I consider adding to improve my development workflow?
 
 #### "Server Not Responding"
 
-**Symptoms**: MCP client can't connect to Wise Mise MCP
+**Symptoms**: MCP client can't connect to Wise Mise
 **Solutions**:
-1. Check that Python/UV is in your PATH
-2. Verify the working directory in your MCP config
-3. Try running the server manually: `python -m wise_mise_mcp`
+1. Check that `wise-mise` is in your PATH.
+2. Verify the working directory in your MCP config.
+3. Try running the server manually: `wise-mise server`
 
 #### "No Tasks Found" 
 
@@ -509,7 +469,7 @@ What new tasks should I consider adding to improve my development workflow?
 
 **Symptoms**: Health check shows missing dependencies
 **Solutions**:
-1. Reinstall with `uv sync` or `pip install wise-mise-mcp`
+1. Reinstall with `uv sync` or `pip install wise-mise`
 2. Check Python environment is activated
 3. Verify all system requirements are met
 
@@ -519,17 +479,17 @@ For detailed troubleshooting:
 
 ```bash
 # Run server with verbose logging
-python -m wise_mise_mcp --debug
+wise-mise server --verbose
 
 # Check server health
-python -m wise_mise_mcp --health-check
+wise-mise server --health-check
 ```
 
 ### Getting Help
 
 1. **Check the health report** first using the `get_server_health` tool
 2. **Review logs** in your MCP client's debug output
-3. **Create an issue** on [GitHub](https://github.com/delorenj/wise-mise-mcp/issues) with:
+3. **Create an issue** on [GitHub](https://github.com/delorenj/wise-mise/issues) with:
    - Health check output
    - Project structure (if possible)
    - MCP client configuration
@@ -539,7 +499,7 @@ python -m wise_mise_mcp --health-check
 
 ## 🎯 **Next Steps**
 
-Now that you're set up with Wise Mise MCP, explore these areas:
+Now that you're set up with Wise Mise, explore these areas:
 
 ### 📚 **Learn More**
 - [API Reference](./API.md) - Complete tool documentation
@@ -552,26 +512,26 @@ Now that you're set up with Wise Mise MCP, explore these areas:
 - Integrate with your CI/CD pipeline
 
 ### 🤝 **Connect**
-- Join our [GitHub Discussions](https://github.com/delorenj/wise-mise-mcp/discussions)
-- Follow [@WiseMiseMCP](https://twitter.com/WiseMiseMCP) for tips and updates
+- Join our [GitHub Discussions](https://github.com/delorenj/wise-mise/discussions)
+- Follow [@WiseMise](https://twitter.com/WiseMise) for tips and updates
 - Share your success stories and use cases
 
 ---
 
 ## 🎉 **You're Ready!**
 
-Congratulations! You now have Wise Mise MCP set up and understand how to:
+Congratulations! You now have Wise Mise set up and understand how to:
 
 - ✅ **Analyze projects** for optimal task recommendations
-- ✅ **Create intelligent tasks** using natural language
+- ✅ **Create intelligent tasks** using the MCP server
 - ✅ **Understand task architecture** and dependencies
 - ✅ **Validate and optimize** your configuration
 - ✅ **Troubleshoot issues** when they arise
 
 **Welcome to the future of intelligent task management!** 🚀
 
-Your development workflow will never be the same. Enjoy building amazing things with Wise Mise MCP!
+Your development workflow will never be the same. Enjoy building amazing things with Wise Mise!
 
 ---
 
-*Questions? Need help? We're here for you in [GitHub Discussions](https://github.com/delorenj/wise-mise-mcp/discussions)!*
+*Questions? Need help? We're here for you in [GitHub Discussions](https://github.com/delorenj/wise-mise/discussions)!*

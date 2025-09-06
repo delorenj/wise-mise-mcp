@@ -9,12 +9,12 @@ import json
 from pathlib import Path
 from typing import List
 
-from wise_mise_mcp.server import (
+from wise_mise.server import (
     analyze_project_for_tasks,
     AnalyzeProjectRequest
 )
-from wise_mise_mcp.analyzer import TaskAnalyzer
-from wise_mise_mcp.models import ProjectStructure
+from wise_mise.analyzer import TaskAnalyzer
+from wise_mise.models import ProjectStructure
 
 
 class TestLargeProjectPerformance:

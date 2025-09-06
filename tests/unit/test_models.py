@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch, mock_open
 
-from wise_mise_mcp.models import (
+from wise_mise.models import (
     TaskDefinition,
     TaskDomain, 
     TaskComplexity,
@@ -433,7 +433,7 @@ class TestTaskRecommendation:
     
     def test_task_recommendation_creation(self):
         """Test creating task recommendation"""
-        from wise_mise_mcp.models import TaskRecommendation
+        from wise_mise.models import TaskRecommendation
         
         task = TaskDefinition(
             name="test:e2e",

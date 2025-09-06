@@ -35,7 +35,7 @@ Describe the tests you ran to verify your changes:
 - [ ] My code follows the project's style guidelines
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] My code passes all quality checks (`uv run black --check . && uv run ruff check . && uv run mypy wise_mise_mcp/`)
+- [ ] My code passes all quality checks (`uv run black --check . && uv run ruff check . && uv run mypy wise_mise/`)
 
 ### Testing
 - [ ] I have added tests that prove my fix is effective or that my feature works

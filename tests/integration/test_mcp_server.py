@@ -9,7 +9,7 @@ import asyncio
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from wise_mise_mcp.server import (
+from wise_mise.server import (
     analyze_project_for_tasks,
     trace_task_chain, 
     create_task,

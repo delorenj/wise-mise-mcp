@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from wise_mise_mcp.analyzer import TaskAnalyzer
-from wise_mise_mcp.models import (
+from wise_mise.analyzer import TaskAnalyzer
+from wise_mise.models import (
     TaskDefinition, 
     TaskDomain, 
     TaskComplexity, 

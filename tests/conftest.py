@@ -9,15 +9,15 @@ from pathlib import Path
 from typing import Dict, Any
 from unittest.mock import Mock, AsyncMock
 
-from wise_mise_mcp.models import (
+from wise_mise.models import (
     TaskDefinition, 
     TaskDomain, 
     TaskComplexity, 
     MiseConfig, 
     ProjectStructure
 )
-from wise_mise_mcp.analyzer import TaskAnalyzer
-from wise_mise_mcp.manager import TaskManager
+from wise_mise.analyzer import TaskAnalyzer
+from wise_mise.manager import TaskManager
 
 
 @pytest.fixture

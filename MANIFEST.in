@@ -1,7 +1,7 @@
 include README.md
 include LICENSE
 include docs/CHANGELOG.md
-recursive-include wise_mise_mcp *.py
+recursive-include wise_mise *.py
 recursive-include tests *.py
 global-exclude __pycache__
 global-exclude *.py[co]

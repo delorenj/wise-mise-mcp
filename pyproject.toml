@@ -5,9 +5,9 @@ requires = [
 build-backend = "hatchling.build"
 
 [project]
-name = "wise-mise-mcp"
+name = "wise-mise"
 version = "2.1.1"
-description = "An intelligent MCP server for wise mise task management and organization"
+description = "An intelligent CLI and MCP server for wise mise task management and organization"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
@@ -24,6 +24,8 @@ keywords = [
     "mise-en-place",
     "intelligent",
     "ai-assistant",
+    "cli",
+    "wise-mise-mcp",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -54,15 +56,15 @@ dependencies = [
 text = "MIT"
 
 [project.urls]
-Homepage = "https://github.com/delorenj/wise-mise-mcp"
-Repository = "https://github.com/delorenj/wise-mise-mcp.git"
-Issues = "https://github.com/delorenj/wise-mise-mcp/issues"
-Discussions = "https://github.com/delorenj/wise-mise-mcp/discussions"
-Changelog = "https://github.com/delorenj/wise-mise-mcp/blob/main/docs/CHANGELOG.md"
-Documentation = "https://github.com/delorenj/wise-mise-mcp#readme"
+Homepage = "https://github.com/delorenj/wise-mise"
+Repository = "https://github.com/delorenj/wise-mise.git"
+Issues = "https://github.com/delorenj/wise-mise/issues"
+Discussions = "https://github.com/delorenj/wise-mise/discussions"
+Changelog = "https://github.com/delorenj/wise-mise/blob/main/docs/CHANGELOG.md"
+Documentation = "https://github.com/delorenj/wise-mise#readme"
 
 [project.scripts]
-wise-mise-mcp = "wise_mise_mcp.__main__:main"
+wise-mise = "wise_mise.__main__:main"
 
 [project.optional-dependencies]
 dev = [
@@ -88,12 +90,12 @@ docs = [
 
 [tool.hatch.build.targets.wheel]
 packages = [
-    "wise_mise_mcp",
+    "wise_mise",
 ]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/wise_mise_mcp",
+    "/wise_mise",
     "/tests",
     "/README.md",
     "/LICENSE",
@@ -210,7 +212,7 @@ markers = [
 
 [tool.coverage.run]
 source = [
-    "wise_mise_mcp",
+    "wise_mise",
 ]
 omit = [
     "*/tests/*",

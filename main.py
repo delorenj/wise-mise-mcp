@@ -12,11 +12,11 @@ import os
 import sys
 from importlib.metadata import version, PackageNotFoundError
 
-from wise_mise_mcp.server import app
+from wise_mise.server import app
 
 # Get version from package metadata
 try:
-    __version__ = version("wise-mise-mcp")
+    __version__ = version("wise-mise")
 except PackageNotFoundError:
     __version__ = "dev"
 
@@ -71,7 +71,7 @@ async def main() -> None:
     args = parser.parse_args()
     setup_logging(args.verbose)
 
-    logging.info(f"Wise Mise MCP Server v{__version__} starting up")
+    logging.info(f"Wise Mise Server v{__version__} starting up")
     logging.info(f"Using transport: {args.transport}")
 
     if args.transport == "sse":

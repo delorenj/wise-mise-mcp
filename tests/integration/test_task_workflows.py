@@ -7,7 +7,7 @@ import tempfile
 import json
 from pathlib import Path
 
-from wise_mise_mcp.server import (
+from wise_mise.server import (
     analyze_project_for_tasks,
     create_task,
     trace_task_chain,
@@ -21,7 +21,7 @@ from wise_mise_mcp.server import (
     PruneTasksRequest,
     RemoveTaskRequest
 )
-from wise_mise_mcp.models import MiseConfig
+from wise_mise.models import MiseConfig
 
 
 class TestTaskLifecycleWorkflows:

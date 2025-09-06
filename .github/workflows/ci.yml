@@ -47,7 +47,7 @@ jobs:
         run: black --check --diff .
       
       - name: Run MyPy type checking
-        run: mypy wise_mise_mcp/ --show-error-codes
+        run: mypy wise_mise/ --show-error-codes
 
   unit-tests:
     name: Unit Tests
@@ -75,7 +75,7 @@ jobs:
       - name: Run unit tests with coverage
         run: |
           pytest tests/unit/ \
-            --cov=wise_mise_mcp \
+            --cov=wise_mise \
             --cov-report=xml:coverage-unit.xml \
             --cov-report=term-missing \
             --cov-fail-under=85 \
@@ -115,7 +115,7 @@ jobs:
       - name: Run integration tests
         run: |
           pytest tests/integration/ \
-            --cov=wise_mise_mcp \
+            --cov=wise_mise \
             --cov-report=xml:coverage-integration.xml \
             --cov-append \
             --junitxml=junit-integration.xml \

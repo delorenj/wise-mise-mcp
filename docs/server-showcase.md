@@ -1,8 +1,8 @@
-# Wise Mise MCP Server - Production Showcase
+# Wise Mise - Production Showcase
 
 ## Overview
 
-The Wise Mise MCP Server has been transformed from a basic "Hello World" script into a sophisticated, production-ready MCP server demonstrating best practices in:
+The Wise Mise project has been transformed from a basic "Hello World" script into a sophisticated, production-ready CLI and MCP server demonstrating best practices in:
 
 - **Professional Architecture**: Proper module structure with separation of concerns
 - **Intelligent Domain Expertise**: 10 specialized domain experts for task analysis
@@ -15,9 +15,9 @@ The Wise Mise MCP Server has been transformed from a basic "Hello World" script 
 ## Architecture Overview
 
 ```
-wise-mise-mcp/
-├── main.py                          # Production entry point with CLI
-├── wise_mise_mcp/
+wise-mise/
+├── wise_mise/
+│   ├── __main__.py                  # CLI entry point
 │   ├── server.py                    # FastMCP server with 9 tools + 2 prompts
 │   ├── models.py                    # Type-safe data models  
 │   ├── analyzer.py                  # Project analysis engine
@@ -58,7 +58,7 @@ python main.py --log-level DEBUG   # Runtime log level override
 {
   "logging": {
     "level": "INFO",
-    "file": "./logs/wise-mise-mcp.log",
+    "file": "./logs/wise-mise.log",
     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   },
   "task_defaults": {
@@ -126,7 +126,7 @@ python main.py --log-level DEBUG   # Runtime log level override
 **Before**: No type annotations
 ```python
 def main():
-    print("Hello from wise-mise-mcp!")
+    print("Hello from wise-mise!")
 ```
 
 **After**: Complete type annotations
@@ -237,9 +237,9 @@ Add to Claude Desktop configuration:
 {
   "mcpServers": {
     "wise-mise": {
-      "command": "uv",
-      "args": ["run", "python", "/path/to/wise-mise-mcp/main.py"],
-      "cwd": "/path/to/wise-mise-mcp"
+      "command": "wise-mise",
+      "args": ["server"],
+      "cwd": "/path/to/your/project"
     }
   }
 }

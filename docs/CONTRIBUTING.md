@@ -1,8 +1,8 @@
-# 🚀 Contributing to Wise Mise MCP
+# 🚀 Contributing to Wise Mise
 
 > **Join the mission to revolutionize developer task management with intelligent automation**
 
-Thank you for your interest in contributing to Wise Mise MCP! This project represents the cutting edge of AI-assisted development tooling, and we're building something that will fundamentally change how developers approach task automation. Every contribution, from code to documentation to community engagement, moves us closer to our vision of seamless, intelligent development workflows.
+Thank you for your interest in contributing to Wise Mise! This project represents the cutting edge of AI-assisted development tooling, and we're building something that will fundamentally change how developers approach task automation. Every contribution, from code to documentation to community engagement, moves us closer to our vision of seamless, intelligent development workflows.
 
 ---
 
@@ -34,14 +34,14 @@ Thank you for your interest in contributing to Wise Mise MCP! This project repre
 
 ```bash
 # Clone and enter the project
-git clone git@github.com:delorenj/wise-mise-mcp.git
-cd wise-mise-mcp
+git clone git@github.com:delorenj/wise-mise.git
+cd wise-mise
 
 # Install with UV (lightning fast)
 uv sync
 
 # Verify your setup with our health check
-uv run python -m wise_mise_mcp.server get_server_health
+wise-mise server --health-check
 
 # Run the test suite to ensure everything works
 uv run pytest --tb=short
@@ -58,7 +58,8 @@ Understanding the codebase architecture is key to making impactful contributions
 ### Core System Design
 
 ```
-wise_mise_mcp/
+wise_mise/
+├── __main__.py          # CLI entry point
 ├── 🎯 server.py          # FastMCP server - The command center
 ├── 📊 models.py          # Data models - Our type-safe foundation  
 ├── 🔍 analyzer.py        # Project analysis engine - The brain
@@ -69,7 +70,7 @@ wise_mise_mcp/
 
 ### The Expert System Philosophy
 
-**Domain Experts** are the heart of Wise Mise MCP's intelligence:
+**Domain Experts** are the heart of Wise Mise's intelligence:
 
 ```python
 class MyFrameworkExpert(DomainExpert):
@@ -121,15 +122,16 @@ class SvelteKitExpert(DomainExpert):
 
 ### 🛠️ **Tool Innovation** - *Shape the Future*
 
-**What**: Create new MCP tools that extend Wise Mise MCP's capabilities.
+**What**: Create new CLI commands or MCP tools that extend Wise Mise's capabilities.
 
 **Why**: Push the boundaries of what's possible with intelligent task management.
 
 **Ideas**:
-- Visual task dependency graphs
-- Performance analysis and optimization suggestions
-- Integration with popular IDEs and editors
-- Advanced project health metrics
+- A `doctor` command for checking environment health.
+- Visual task dependency graphs (either via CLI or MCP).
+- Performance analysis and optimization suggestions.
+- Integration with popular IDEs and editors.
+- Advanced project health metrics.
 
 ```python
 @app.tool()
@@ -145,14 +147,14 @@ async def visualize_task_dependencies(request: VisualizationRequest) -> Dict[str
 **Why**: Great documentation is what transforms powerful tools into beloved tools.
 
 **Focus Areas**:
-- **Real-world tutorials**: Show Wise Mise MCP solving actual problems
+- **Real-world tutorials**: Show Wise Mise solving actual problems
 - **Video guides**: Visual learners need love too
 - **Integration examples**: How to use with popular development stacks
 - **Architecture deep-dives**: Help others understand the magic
 
 ### 🧪 **Quality & Performance** - *The Foundation*
 
-**What**: Ensure Wise Mise MCP works flawlessly across diverse environments and use cases.
+**What**: Ensure Wise Mise works flawlessly across diverse environments and use cases.
 
 **Why**: Reliability and performance are table stakes for developer tools.
 
@@ -168,7 +170,7 @@ async def visualize_task_dependencies(request: VisualizationRequest) -> Dict[str
 
 ### 1. **Choose Your Mission**
 
-Browse our [High-Impact Issues](https://github.com/delorenj/wise-mise-mcp/labels/high-impact) or [Architecture Discussions](https://github.com/delorenj/wise-mise-mcp/discussions) to find meaningful work.
+Browse our [High-Impact Issues](https://github.com/delorenj/wise-mise/labels/high-impact) or [Architecture Discussions](https://github.com/delorenj/wise-mise/discussions) to find meaningful work.
 
 **Pro Tip**: Issues labeled `domain-expert-needed` are perfect for showcasing your technology expertise.
 
@@ -184,8 +186,8 @@ git checkout -b perf/large-project-optimization
 # Every line should serve the greater mission
 
 # Test thoroughly - quality is non-negotiable
-uv run pytest --cov=wise_mise_mcp --cov-report=html
-uv run black . && uv run ruff check --fix . && uv run mypy wise_mise_mcp/
+uv run pytest --cov=wise_mise --cov-report=html
+uv run black . && uv run ruff check --fix . && uv run mypy wise_mise/
 
 # Commit with clarity and purpose
 git add .
@@ -205,7 +207,7 @@ Your PR is your chance to showcase your contribution's impact:
 
 ```markdown
 ## 🎯 **Impact Summary**
-This PR adds Rust ecosystem intelligence, enabling Wise Mise MCP to automatically configure optimal task workflows for Rust projects.
+This PR adds Rust ecosystem intelligence, enabling Wise Mise to automatically configure optimal task workflows for Rust projects.
 
 ## ✨ **What's New**
 - **RustExpert**: Comprehensive Rust project analysis
@@ -292,7 +294,7 @@ def create_intelligent_tasks(
 ) -> TaskCreationResult:
     """Create intelligent mise tasks based on deep project analysis.
     
-    This method represents the core intelligence of Wise Mise MCP. It analyzes
+    This method represents the core intelligence of Wise Mise. It analyzes
     the project's technology stack, development patterns, and existing 
     configuration to generate a comprehensive set of optimally organized tasks.
     
@@ -401,7 +403,7 @@ uv run pytest tests/test_new_feature.py::test_my_new_functionality -v
 # Add edge cases and error conditions
 
 # Ensure comprehensive coverage
-uv run pytest --cov=wise_mise_mcp --cov-report=term-missing
+uv run pytest --cov=wise_mise --cov-report=term-missing
 ```
 
 ---
@@ -420,20 +422,20 @@ uv run pytest --cov=wise_mise_mcp --cov-report=term-missing
 
 ### Communication Channels
 
-**🐛 Bug Reports**: [GitHub Issues](https://github.com/delorenj/wise-mise-mcp/issues/new?template=bug_report.md)
+**🐛 Bug Reports**: [GitHub Issues](https://github.com/delorenj/wise-mise/issues/new?template=bug_report.md)
 - Use our template for faster resolution
 - Include reproduction steps and environment details
 
-**💡 Feature Requests**: [GitHub Discussions](https://github.com/delorenj/wise-mise-mcp/discussions/categories/ideas)
+**💡 Feature Requests**: [GitHub Discussions](https://github.com/delorenj/wise-mise/discussions/categories/ideas)
 - Start with the problem you're trying to solve
 - Engage with the community on implementation approaches
 
-**❓ Questions**: [GitHub Discussions](https://github.com/delorenj/wise-mise-mcp/discussions/categories/q-a)
+**❓ Questions**: [GitHub Discussions](https://github.com/delorenj/wise-mise/discussions/categories/q-a)
 - No question is too basic or too advanced
 - Help others by answering questions in your area of expertise
 
-**🎉 Show and Tell**: [GitHub Discussions](https://github.com/delorenj/wise-mise-mcp/discussions/categories/show-and-tell)
-- Share how you're using Wise Mise MCP
+**🎉 Show and Tell**: [GitHub Discussions](https://github.com/delorenj/wise-mise/discussions/categories/show-and-tell)
+- Share how you're using Wise Mise
 - Showcase integrations and creative applications
 
 ---
@@ -507,8 +509,8 @@ Contributing to Wise Mise MCP will expand your expertise in:
 Ready to make your mark on the future of developer tooling?
 
 1. **🚀 Set up your development environment** (60 seconds with UV)
-2. **🎯 Find your first contribution** in our [Good First Issues](https://github.com/delorenj/wise-mise-mcp/labels/good-first-issue)
-3. **💬 Introduce yourself** in [GitHub Discussions](https://github.com/delorenj/wise-mise-mcp/discussions)
+2. **🎯 Find your first contribution** in our [Good First Issues](https://github.com/delorenj/wise-mise/labels/good-first-issue)
+3. **💬 Introduce yourself** in [GitHub Discussions](https://github.com/delorenj/wise-mise/discussions)
 4. **🛠️ Start building** something amazing
 
 ---
@@ -517,13 +519,13 @@ Ready to make your mark on the future of developer tooling?
 
 **Stuck? Questions? Ideas?** We're here to help!
 
-- 🐦 **Twitter**: [@WiseMiseMCP](https://twitter.com/WiseMiseMCP) - Follow for updates and tips
+- 🐦 **Twitter**: [@WiseMise](https://twitter.com/WiseMise) - Follow for updates and tips
 - 💼 **LinkedIn**: Connect with [Jarad DeLorenzo](https://linkedin.com/in/jaraddelorenzo) - Project creator
-- 📧 **Email**: [contribute@wise-mise-mcp.dev](mailto:contribute@wise-mise-mcp.dev) - Direct line to maintainers
-- 💬 **Discord**: [Join our community server](https://discord.gg/wise-mise-mcp) - Real-time chat and collaboration
+- 📧 **Email**: [contribute@wise-mise.dev](mailto:contribute@wise-mise.dev) - Direct line to maintainers
+- 💬 **Discord**: [Join our community server](https://discord.gg/wise-mise) - Real-time chat and collaboration
 
 ---
 
 **🎉 Welcome to the team!** Your contributions will impact thousands of developers worldwide. Let's build something extraordinary together.
 
-*The Wise Mise MCP Team*
+*The Wise Mise Team*

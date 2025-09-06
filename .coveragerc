@@ -1,7 +1,7 @@
-# Coverage.py configuration for wise-mise-mcp
+# Coverage.py configuration for wise-mise
 
 [run]
-source = wise_mise_mcp
+source = wise_mise
 omit = 
     */tests/*
     */test_*
@@ -83,7 +83,7 @@ precision = 1
 
 [html]
 directory = tests/coverage_html
-title = wise-mise-mcp Coverage Report
+title = wise-mise Coverage Report
 show_contexts = True
 
 [xml]

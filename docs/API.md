@@ -1,8 +1,8 @@
-# 🛠️ Wise Mise MCP API Reference
+# 🛠️ Wise Mise API Reference
 
-> **Complete reference for all MCP tools, prompts, and capabilities**
+> **Complete reference for all CLI commands, MCP tools, prompts, and capabilities**
 
-This comprehensive API reference covers every tool and capability provided by Wise Mise MCP. Each tool is designed to work seamlessly with MCP-compatible clients like Claude Desktop, providing intelligent mise task management through natural language interactions.
+This comprehensive API reference covers every command, tool, and capability provided by Wise Mise. Each tool is designed to work from the command line or seamlessly with MCP-compatible clients like Claude Desktop, providing intelligent mise task management through natural language interactions.
 
 ---
 
@@ -596,14 +596,14 @@ Wise Mise MCP provides intelligent prompts that give you expert guidance on task
 
 ### Claude Desktop Configuration
 
-Add Wise Mise MCP to your Claude Desktop configuration:
+Add Wise Mise to your Claude Desktop configuration:
 
 ```json
 {
   "mcpServers": {
-    "wise-mise-mcp": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "wise_mise_mcp"],
+    "wise-mise": {
+      "command": "wise-mise",
+      "args": ["server"],
       "cwd": "/path/to/your/project"
     }
   }
@@ -753,6 +753,6 @@ Use the expert prompts to get contextual advice for your specific situation.
 
 ---
 
-**Happy building with Wise Mise MCP!** 🚀
+**Happy building with Wise Mise!** 🚀
 
 For more examples and tutorials, see our [Usage Guide](./USAGE.md) and [Contributing Guide](./CONTRIBUTING.md).

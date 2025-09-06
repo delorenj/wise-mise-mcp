@@ -11,13 +11,13 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from wise_mise_mcp.server import (
+from wise_mise.server import (
     analyze_project_for_tasks,
     create_task,
     trace_task_chain
 )
-from wise_mise_mcp.analyzer import TaskAnalyzer
-from wise_mise_mcp.manager import TaskManager
+from wise_mise.analyzer import TaskAnalyzer
+from wise_mise.manager import TaskManager
 
 
 class TestInputValidation:

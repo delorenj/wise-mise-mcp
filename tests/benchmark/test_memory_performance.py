@@ -18,7 +18,7 @@ from typing import Dict, List, Tuple
 import psutil
 import time
 
-from wise_mise_mcp.server import (
+from wise_mise.server import (
     analyze_project_for_tasks,
     create_task,
     AnalyzeProjectRequest,

@@ -8,8 +8,8 @@ import os
 from pathlib import Path
 from unittest.mock import Mock, patch, mock_open
 
-from wise_mise_mcp.manager import TaskManager
-from wise_mise_mcp.models import (
+from wise_mise.manager import TaskManager
+from wise_mise.models import (
     TaskDefinition, 
     TaskDomain, 
     TaskComplexity, 

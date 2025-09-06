@@ -16,7 +16,7 @@ from .manager import TaskManager
 
 # Get version from package metadata
 try:
-    __version__ = version("wise-mise-mcp")
+    __version__ = version("wise-mise")
 except PackageNotFoundError:
     __version__ = "dev"
 
@@ -58,7 +58,7 @@ class RemoveTaskRequest(BaseModel):
 
 
 # Initialize FastMCP
-app = FastMCP("Wise Mise MCP")
+app = FastMCP("Wise Mise")
 
 
 @app.tool()
@@ -710,7 +710,7 @@ def main():
         try:
             @app.app.get("/health")
             async def health_check():
-                return {"status": "healthy", "service": "wise-mise-mcp"}
+                return {"status": "healthy", "service": "wise-mise"}
         except Exception as e:
             print(f"Could not add health endpoint: {e}")
             

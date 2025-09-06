@@ -8,13 +8,13 @@ import json
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from wise_mise_mcp.experts import (
+from wise_mise.experts import (
     BuildExpert, 
     TestExpert, 
     LintExpert, 
     DevExpert
 )
-from wise_mise_mcp.models import (
+from wise_mise.models import (
     TaskDomain, 
     ProjectStructure, 
     TaskRecommendation
@@ -609,7 +609,7 @@ class TestDomainExpertIntegration:
                 
     def test_expert_task_complexity_assignment(self):
         """Test that experts assign appropriate task complexity"""
-        from wise_mise_mcp.models import TaskComplexity
+        from wise_mise.models import TaskComplexity
         
         experts = [BuildExpert(), TestExpert(), LintExpert(), DevExpert()]
         

@@ -10,7 +10,7 @@ from pathlib import Path
 # Add the package to Python path for development
 sys.path.insert(0, str(Path(__file__).parent))
 
-from wise_mise_mcp.server import main
+from wise_mise.server import main
 
 if __name__ == "__main__":
     try:

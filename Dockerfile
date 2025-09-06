@@ -22,7 +22,7 @@ RUN pip install uv
 RUN uv pip install --system --no-cache-dir -e .
 
 # Copy source code
-COPY wise_mise_mcp/ ./wise_mise_mcp/
+COPY wise_mise/ ./wise_mise/
 
 # Create a non-root user for security
 RUN groupadd -r mcp && useradd -r -g mcp -d /app -s /bin/bash mcp && \
@@ -43,4 +43,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -s http://localhost:3000/mcp > /dev/null || exit 1
 
 # Default command to start the MCP server in HTTP mode
-CMD ["python", "-m", "wise_mise_mcp.server", "--transport", "http", "--port", "3000", "--host", "0.0.0.0"]
+CMD ["python", "-m", "wise_mise.server", "--transport", "http", "--port", "3000", "--host", "0.0.0.0"]

@@ -1,17 +1,17 @@
-# 🎯 Wise Mise MCP
+# 🎯 Wise Mise
 
-> **The intelligent MCP server that transforms mise task management with AI-powered analysis and domain expertise**
+> **The intelligent CLI and MCP server that transforms mise task management with AI-powered analysis and domain expertise**
 
-[![PyPI version](https://badge.fury.io/py/wise-mise-mcp.svg)](https://badge.fury.io/py/wise-mise-mcp)
+[![PyPI version](https://badge.fury.io/py/wise-mise.svg)](https://badge.fury.io/py/wise-mise)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Documentation](https://img.shields.io/badge/docs-readthedocs-blue.svg)](https://wise-mise-mcp.readthedocs.io)
-[![Deploy to Smithery](https://smithery.ai/badge)](https://smithery.ai/server/wise-mise-mcp)
+[![Documentation](https://img.shields.io/badge/docs-readthedocs-blue.svg)](https://wise-mise.readthedocs.io)
+[![Deploy to Smithery](https://smithery.ai/badge)](https://smithery.ai/server/wise-mise)
 
-**Stop wrestling with mise configuration.** Wise Mise MCP brings enterprise-grade intelligence to your [mise](https://mise.jdx.dev/) workflow, automatically analyzing your project structure and creating perfectly organized, maintainable task architectures that scale with your development needs.
+**Stop wrestling with mise configuration.** Wise Mise brings enterprise-grade intelligence to your [mise](https://mise.jdx.dev/) workflow. Use it as a powerful **CLI** for instant project analysis, or run it as an **MCP server** to supercharge your existing development tools.
 
-## Why Wise Mise MCP?
+## Why Wise Mise?
 
 **🧠 Intelligent Task Analysis**
 
@@ -33,32 +33,42 @@
 
 ## Quick Start
 
-### Using UVX (Recommended)
+### CLI Usage (Recommended)
 
+Install and run the analyzer on your project in one command:
 ```bash
-# Just run this to start Wise Mise MCP with UVX
-uvx wise-mise-mcp
-
-# Or install globally
-uv tool install wise-mise-mcp
+uvx wise-mise analyze .
 ```
 
-### Traditional pip
-
+Or, install it first:
 ```bash
-pip install wise-mise-mcp
+uv tool install wise-mise
+# then run it
+wise-mise analyze .
 ```
 
-### Add to Your MCP Client
+### MCP Server Usage
+
+If you want to use Wise Mise as an MCP server, you can start it with:
+```bash
+wise-mise server
+```
+
+You can also use `uvx` to run the server without installing:
+```bash
+uvx wise-mise server
+```
+
+#### Add to Your MCP Client
 
 Add to your MCP client configuration (e.g., Claude Desktop):
 
 ```json
 {
   "mcpServers": {
-    "wise-mise-mcp": {
-      "command": "uvx",
-      "args": ["wise_mise_mcp"]
+    "wise-mise": {
+      "command": "wise-mise",
+      "args": ["server"]
     }
   }
 }
@@ -66,7 +76,7 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 
 ### Deploy with Smithery (One-Click Deployment)
 
-[![Deploy to Smithery](https://smithery.ai/badge)](https://smithery.ai/server/wise-mise-mcp)
+[![Deploy to Smithery](https://smithery.ai/badge)](https://smithery.ai/server/wise-mise)
 
 Deploy Wise Mise MCP instantly to Smithery's cloud infrastructure with one click. Smithery provides managed MCP server hosting with built-in monitoring, scaling, and zero-configuration deployment.
 
@@ -86,34 +96,33 @@ Deploy Wise Mise MCP instantly to Smithery's cloud infrastructure with one click
 
 ## What Makes It "Wise"?
 
-Wise Mise MCP goes beyond simple task creation. It brings intelligence to your mise configuration:
+Wise Mise goes beyond simple task creation. It brings intelligence to your mise configuration:
 
 ### 🔍 Project Analysis
 
-```python
-# Analyzes your entire project structure
-analyze_project_for_tasks("/path/to/project")
-# Returns strategically organized tasks based on your tech stack
+The `analyze` command gives you an instant overview of your project and suggests a task architecture.
+```bash
+wise-mise analyze .
 ```
-
-### 🕸️ Dependency Mapping
-
-```python
-# Traces complex task relationships
-trace_task_chain("/path/to/project", "build:prod")
-# Visualizes the complete execution flow
+```json
+{
+  "project_path": "/path/to/your/project",
+  "project_structure": {
+    "package_managers": ["npm"],
+    "languages": ["javascript", "typescript"],
+    "frameworks": ["react", "next.js"]
+  },
+  "recommended_tasks": [
+    {
+      "name": "build:prod",
+      "domain": "build",
+      "description": "Build for production",
+      "reasoning": "Detected Next.js production build script."
+    }
+  ]
+}
 ```
-
-### ⚡ Smart Task Creation
-
-```python
-# Intelligently places tasks in the right domain
-create_task(
-    project_path="/path/to/project",
-    task_description="Run TypeScript type checking",
-    # Automatically suggests: lint:types with proper dependencies
-)
-```
+This output can be used directly or as a starting point for your `.mise.toml`.
 
 ## Core Features
 
@@ -144,63 +153,9 @@ create_task(
 | `validate_task_architecture` | Ensure configuration follows best practices    |
 | `get_task_recommendations`   | Get suggestions for optimization               |
 
-## Example Workflows
-
-### Analyzing a New Project
-
-```bash
-# Let Wise Mise MCP analyze your project
-> analyze_project_for_tasks("./my-app")
-
-✅ Detected: Next.js + TypeScript + Prisma
-📋 Suggested Tasks:
-  ├── build:dev (next dev)
-  ├── build:prod (next build)
-  ├── test:unit (jest)
-  ├── test:e2e (playwright)
-  ├── lint:code (eslint)
-  ├── lint:types (tsc --noEmit)
-  ├── db:migrate (prisma migrate)
-  └── deploy:vercel (vercel deploy)
-```
-
-### Understanding Task Dependencies
-
-```bash
-# Trace the execution flow
-> trace_task_chain("./my-app", "deploy:prod")
-
-🕸️ Task Chain for deploy:prod:
-  1. lint:types (TypeScript check)
-  2. test:unit (Unit tests)
-  3. build:prod (Production build)
-  4. deploy:prod (Deploy to production)
-
-💡 Recommendation: Add test:e2e before deploy:prod
-```
-
-### Smart Task Creation
-
-```bash
-# Describe what you want, get intelligent suggestions
-> create_task(
-    project_path="./my-app",
-    task_description="Generate API documentation from OpenAPI spec"
-  )
-
-🧠 Analysis: Documentation generation task
-📍 Suggested Placement: docs:api
-🔗 Dependencies: build:prod (for spec generation)
-📝 Suggested Implementation:
-  [tasks.docs.api]
-  run = "swagger-codegen generate -i ./openapi.json -l html2 -o ./docs/api"
-  sources = ["src/api/**/*.ts", "openapi.json"]
-  outputs = ["docs/api/**/*"]
-```
-
 ## Architecture Philosophy
 
-Wise Mise MCP follows a **Domain-Driven Design** approach to task organization:
+Wise Mise follows a **Domain-Driven Design** approach to task organization:
 
 ### 🏛️ **Hierarchical Structure**
 
@@ -222,7 +177,7 @@ Wise Mise MCP follows a **Domain-Driven Design** approach to task organization:
 
 ## Technology Support
 
-Wise Mise MCP includes expert knowledge for:
+Wise Mise includes expert knowledge for:
 
 **Frontend**: React, Vue, Angular, Svelte, Next.js, Nuxt, Vite, Webpack
 **Backend**: Node.js, Python, Go, Rust, Java, .NET, PHP
@@ -239,8 +194,8 @@ We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for deta
 
 ```bash
 # Clone and setup with UV
-git clone https://github.com/delorenj/wise-mise-mcp
-cd wise-mise-mcp
+git clone https://github.com/delorenj/wise-mise
+cd wise-mise
 uv sync
 
 # Run tests
@@ -257,9 +212,9 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
-- **Documentation**: [Full API Documentation](https://wise-mise-mcp.readthedocs.io/)
-- **Issues**: [GitHub Issues](https://github.com/delorenj/wise-mise-mcp/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/delorenj/wise-mise-mcp/discussions)
+- **Documentation**: [Full API Documentation](https://wise-mise.readthedocs.io/)
+- **Issues**: [GitHub Issues](https://github.com/delorenj/wise-mise/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/delorenj/wise-mise/discussions)
 
 ---
 

@@ -11,12 +11,12 @@ run = "uv sync"
 [tasks.test]
 description = "Run tests"
 run = "python -m pytest"
-sources = ["wise_mise_mcp/**/*.py", "tests/**/*.py"]
+sources = ["wise_mise/**/*.py", "tests/**/*.py"]
 
 [tasks."test:fast"]
 description = "Run fast tests (excludes slow memory benchmarks)"
 run = "python -m pytest -c pytest-fast.ini"
-sources = ["wise_mise_mcp/**/*.py", "tests/**/*.py"]
+sources = ["wise_mise/**/*.py", "tests/**/*.py"]
 
 [tasks.lint]
 description = "Run linting"
@@ -44,7 +44,7 @@ sources = ["pyproject.toml"]
 
 [tasks."dev:serve"]
 description = "Start the FastMCP server"
-run = "uv run -m wise_mise_mcp.server"
+run = "uv run -m wise_mise.server"
 depends = ["setup:bootstrap"]
 
 [tasks."test:client"]
@@ -88,34 +88,34 @@ run = [
   "echo 'Publishing to PyPI...'",
   "twine upload dist/*",
 ]
-sources = ["wise_mise_mcp/**/*.py", "pyproject.toml", "README.md"]
+sources = ["wise_mise/**/*.py", "pyproject.toml", "README.md"]
 
 [tasks."build:patch"]
 description = "Build version bump: increment patch version and build package"
 depends = ["bump:patch"]
 run = "uv build"
-sources = ["wise_mise_mcp/**/*.py", "pyproject.toml"]
+sources = ["wise_mise/**/*.py", "pyproject.toml"]
 outputs = ["dist/"]
 
 [tasks."build:minor"]
 description = "Build version increment: minor version update and build package"
 depends = ["bump:minor"]
 run = "uv build"
-sources = ["wise_mise_mcp/**/*.py", "pyproject.toml"]
+sources = ["wise_mise/**/*.py", "pyproject.toml"]
 outputs = ["dist/"]
 
 [tasks."build:major"]
 description = "Build version increment: major version update and build package"
 depends = ["bump:major"]
 run = "uv build"
-sources = ["wise_mise_mcp/**/*.py", "pyproject.toml"]
+sources = ["wise_mise/**/*.py", "pyproject.toml"]
 outputs = ["dist/"]
 
 [tasks."deploy:build"]
 description = "Build the package for deployment"
 depends = ["lint", "test"]
 run = "uv build"
-sources = ["wise_mise_mcp/**/*.py", "pyproject.toml", "README.md"]
+sources = ["wise_mise/**/*.py", "pyproject.toml", "README.md"]
 outputs = ["dist/"]
 
 [tasks."deploy:publish"]
@@ -126,4 +126,4 @@ run = [
   "echo 'Publishing to PyPI...'",
   "twine upload dist/*",
 ]
-sources = ["wise_mise_mcp/**/*.py", "pyproject.toml", "README.md"]
+sources = ["wise_mise/**/*.py", "pyproject.toml", "README.md"]

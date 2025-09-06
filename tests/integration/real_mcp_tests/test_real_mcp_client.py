@@ -85,7 +85,7 @@ class TestRealMCPClientIntegration:
         try:
             # Start the server process
             server_process = await asyncio.create_subprocess_exec(
-                "python", "-m", "wise_mise_mcp.server",
+                "python", "-m", "wise_mise.server",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 stdin=asyncio.subprocess.PIPE
@@ -118,7 +118,7 @@ class TestRealMCPClientIntegration:
         if MCP_CLIENT_AVAILABLE:
             server_params = StdioServerParameters(
                 command="python",
-                args=["-m", "wise_mise_mcp.server"]
+                args=["-m", "wise_mise.server"]
             )
             
             client_context = None
@@ -362,7 +362,7 @@ class TestMCPProtocolCompliance:
         try:
             # Start the server process
             process = subprocess.Popen(
-                ["python", "-m", "wise_mise_mcp.server"],
+                ["python", "-m", "wise_mise.server"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

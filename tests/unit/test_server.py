@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
 
-from wise_mise_mcp.server import (
+from wise_mise.server import (
     AnalyzeProjectRequest,
     TraceTaskChainRequest, 
     CreateTaskRequest,
@@ -26,7 +26,7 @@ from wise_mise_mcp.server import (
     mise_task_expert_guidance,
     task_chain_analyst
 )
-from wise_mise_mcp.models import TaskComplexity
+from wise_mise.models import TaskComplexity
 
 
 class TestRequestModels:
@@ -168,7 +168,7 @@ class TestTraceTaskChain:
             task_name="test"
         )
         
-        with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+        with patch('wise_mise.server.TaskAnalyzer') as mock_analyzer_class:
             mock_analyzer = Mock()
             mock_analyzer.trace_task_chain.return_value = {
                 "task_name": "test",
@@ -232,7 +232,7 @@ class TestCreateTask:
             suggested_name="coverage"
         )
         
-        with patch('wise_mise_mcp.server.TaskManager') as mock_manager_class:
+        with patch('wise_mise.server.TaskManager') as mock_manager_class:
             mock_manager = Mock()
             mock_manager.create_task_intelligently.return_value = {
                 "success": True,
@@ -255,7 +255,7 @@ class TestCreateTask:
             force_complexity="complex"
         )
         
-        with patch('wise_mise_mcp.server.TaskManager') as mock_manager_class:
+        with patch('wise_mise.server.TaskManager') as mock_manager_class:
             mock_manager = Mock()
             mock_manager.create_task_intelligently.return_value = {
                 "success": True,
@@ -334,7 +334,7 @@ class TestPruneTasks:
             dry_run=True
         )
         
-        with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+        with patch('wise_mise.server.TaskAnalyzer') as mock_analyzer_class:
             mock_analyzer = Mock()
             mock_analyzer.find_redundant_tasks.return_value = [
                 {"task": "redundant_task", "reason": "No dependencies"}
@@ -357,8 +357,8 @@ class TestPruneTasks:
             dry_run=False
         )
         
-        with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
-            with patch('wise_mise_mcp.server.TaskManager') as mock_manager_class:
+        with patch('wise_mise.server.TaskAnalyzer') as mock_analyzer_class:
+            with patch('wise_mise.server.TaskManager') as mock_manager_class:
                 mock_analyzer = Mock()
                 mock_analyzer.find_redundant_tasks.return_value = [
                     {"task": "redundant_task", "reason": "No dependencies"}
@@ -401,10 +401,10 @@ class TestRemoveTask:
             task_name="test:old"
         )
         
-        with patch('wise_mise_mcp.server.TaskManager') as mock_manager_class:
-            with patch('wise_mise_mcp.server.TaskAnalyzer') as mock_analyzer_class:
+        with patch('wise_mise.server.TaskManager') as mock_manager_class:
+            with patch('wise_mise.server.TaskAnalyzer') as mock_analyzer_class:
                 # Mock the analyzer to find existing tasks
-                from wise_mise_mcp.models import TaskDefinition, TaskDomain, TaskComplexity
+                from wise_mise.models import TaskDefinition, TaskDomain, TaskComplexity
                 
                 mock_task = TaskDefinition(
                     name="old",
@@ -440,7 +440,7 @@ class TestRemoveTask:
             task_name="nonexistent"
         )
         
-        with patch('wise_mise_mcp.server.TaskManager') as mock_manager_class:
+        with patch('wise_mise.server.TaskManager') as mock_manager_class:
             mock_manager = Mock()
             mock_manager.remove_task.return_value = {
                 "error": "Task 'nonexistent' not found"
@@ -583,7 +583,7 @@ class TestServerIntegration:
     
     def test_all_request_models_importable(self):
         """Test that all request models can be imported and used"""
-        from wise_mise_mcp.server import (
+        from wise_mise.server import (
             AnalyzeProjectRequest,
             TraceTaskChainRequest,
             CreateTaskRequest,
@@ -602,7 +602,7 @@ class TestServerIntegration:
         
     def test_fastmcp_app_structure(self):
         """Test that FastMCP app is properly structured"""
-        from wise_mise_mcp.server import app
+        from wise_mise.server import app
         
         # Should have app instance
         assert app is not None
